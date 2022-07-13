@@ -29,4 +29,4 @@ add_executable(
 )
 
 # link my-recognition to jetson-inference library
-target_link_libraries(tst PkgConfig::deps  ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
+target_link_libraries(planner-tst PkgConfig::deps  ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
