@@ -13,6 +13,7 @@ StreamReader::StreamReader()
     local_port = 20000;
     bufferSize = 1;
     run = false;
+    server_ip = nullptr;
 }
 
 StreamReader::~StreamReader()
@@ -47,7 +48,7 @@ StreamReader *StreamReader::withMessageSinkCallback(GstFlowReturn (*new_sample)(
     return this;
 }
 
-StreamReader *StreamReader::fromServer(const char *ip, int port)
+StreamReader *StreamReader::fromServer(char *ip, int port)
 {
     this->server_ip = ip;
     this->server_port = port;
@@ -143,6 +144,14 @@ void StreamReader::requestDataFromServer()
     close(connFd);
 }
 
+void StreamReader::terminate()
+{
+    if (pipeline == nullptr) return;
+    run = false;
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    gst_object_unref(pipeline);
+}
+
 void StreamReader::loopReceive()
 {
     run = buildPipeline();
@@ -162,12 +171,15 @@ void StreamReader::loopReceive()
 
     while (run)
     {
-        requestDataFromServer();
+        if (this->server_ip != nullptr)
+            requestDataFromServer();
 
         GstMessage *msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE,
                                                      (GstMessageType)(GST_MESSAGE_STATE_CHANGED | GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
 
-        busCallback(bus, msg, nullptr);
+        if (busCallback != nullptr)
+            busCallback(bus, msg, nullptr);
+
         sleep(1);
     }
 }

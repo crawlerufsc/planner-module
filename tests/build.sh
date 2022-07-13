@@ -1,6 +1,6 @@
 #! /bin/sh
 rm -rf build
-mkdir  -p build/net
+mkdir  -p build
 cd build && cmake ..
 make
-mv planner-bin ..
+mv planner-tst ..

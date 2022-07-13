@@ -1,15 +1,9 @@
 # require CMake 2.8 or greater
 cmake_minimum_required(VERSION 2.8)
 
-project(driveless-planner-module)
-
-find_package(OpenCV REQUIRED)
-
-message(STATUS "OpenCV_INCLUDE_DIRS = ${OpenCV_INCLUDE_DIRS}")
-message(STATUS "OpenCV_LIBS = ${OpenCV_LIBS}")
+project(test-modules)
 
 set(CMAKE_CXX_STANDARD 14)
-include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
 
 find_package(PkgConfig REQUIRED)
@@ -23,14 +17,16 @@ include_directories(/usr/include/gstreamer-1.0)
 
 
 SET(TARGET_H
-    communication/stream_reader.h
+    ../communication/stream_reader.h
 )
 
 add_executable(
-    planner-bin 
-    planner.cpp 
-    communication/stream_reader.cpp
+    planner-tst
+    planner_tests.cpp
+    ../communication/stream_reader.cpp
+    communication/test_stream_reader.cpp 
+    
 )
 
 # link my-recognition to jetson-inference library
-target_link_libraries(planner-bin PkgConfig::deps ${OpenCV_LIBS} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
+target_link_libraries(tst PkgConfig::deps  ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})

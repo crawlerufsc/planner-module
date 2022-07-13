@@ -17,7 +17,7 @@ public:
 class StreamReader
 {
 private:
-    const char *server_ip;
+    char *server_ip;
     int server_port;
     int local_port;
     int bufferSize;
@@ -38,12 +38,13 @@ private:
     }
 
 public:
-    StreamReader *fromServer(const char *ip, int port);
+    StreamReader *fromServer(char *ip, int port);
     StreamReader *withLocalPort(int port);
     StreamReader *withBufferSize(int bufferSize);
     StreamReader *withBusCallback(GstBusFunc busCallback);
     StreamReader *withMessageSinkCallback(GstFlowReturn (*new_sample)(GstAppSink *appsink, gpointer user_data));
     void loopReceive();
+    void terminate();
     static StreamData *readStreamData(GstAppSink *sink);
 
     StreamReader(/* args */);

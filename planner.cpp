@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
         ->withBufferSize(1)
         ->withBusCallback(my_bus_callback)
         ->withMessageSinkCallback(new_sample)
-        ->withLocalPort(20002)
+        ->withLocalPort(12345)
         ->loopReceive();
 
         return 0;
