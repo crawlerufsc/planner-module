@@ -13,8 +13,8 @@ void onProcessFrame(DirectProcessPipeline<StreamData> *reader, StreamData *frame
     EXPECT_EQ(200, frame->height);
     EXPECT_TRUE(frame != nullptr);
 
-    unsigned char *ogfileData = FileUtils::readFile(std::string("communication/occupancy_grid_output_test.png"));
-    EXPECT_EQ(*ogfileData, *(frame->data));
+    FileData *p = FileUtils::readFile(std::string("communication/occupancy_grid_output_test.png"));
+    EXPECT_EQ(*p->data, *(frame->data));
 }
 
 TEST(DataSetStreamReader, ReadSuccess)
