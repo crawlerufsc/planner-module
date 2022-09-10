@@ -23,13 +23,16 @@ include_directories(/usr/include/gstreamer-1.0)
 
 
 SET(TARGET_H
-    communication/stream_reader.h
+    communication/network_stream_reader.h
+    communication/stream_data.h
+    control/execution_control.h
+    control/process_pipeline.h
 )
 
 add_executable(
     planner-bin 
     planner.cpp 
-    communication/stream_reader.cpp
+    communication/network_stream_reader.cpp
 )
 
 # link my-recognition to jetson-inference library

@@ -5,13 +5,13 @@ bin:
 	mkdir -p build
 	cd build && cmake ..
 	cd build && make
-	mv build/unittest .
+	mv build/planner-tst .
 	rm -rf build
 
-test: bin
-	./unittest
-	rm unittest
-
 clean:
-	rm -rf build unittest
+	rm -rf build
+	rm planner-tst
 
+test: all
+	./planner-tst
+	

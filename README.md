@@ -4,7 +4,11 @@ Module for executing Path Planning on Crawler <br />
 module | description
 --- | ---
 communication/ | receive stream code for receiving data from vision module
-tests / | path planning testing
+control/ | process pipeline and overall execution control
+model/ | any data-model class
+planning/ | path and trajectory planning classes
+tests/ | unittest and integration tests for this module
+utils/ | util functions such as debug tools and data conversion
 <br />
 
 ## Compile
@@ -16,7 +20,7 @@ make
 ### to clean
 make clean
 
-### to compile and run tests (if in tests/)
+### to compile and run tests (inside tests/)
 make test
 
 

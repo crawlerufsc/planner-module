@@ -1,7 +1,7 @@
 # require CMake 2.8 or greater
 cmake_minimum_required(VERSION 2.8)
 
-project(test-modules)
+project(unittest)
 
 set(CMAKE_CXX_STANDARD 14)
 include_directories(${PROJECT_SOURCE_DIR})
@@ -13,20 +13,36 @@ pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
 pkg_check_modules(GST_APP REQUIRED gstreamer-app-1.0)
 pkg_check_modules(GST_VIDEO REQUIRED gstreamer-video-1.0)
 
+find_package(Threads REQUIRED)
+
+# Locate GTest
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
 include_directories(/usr/include/gstreamer-1.0)
 
 
 SET(TARGET_H
-    ../communication/stream_reader.h
+  ../control/callback_process_pipeline.h
+  ../control/direct_process_pipeline.h
+  ../communication/dataset_stream_reader.h
+  ../utils/debug_utils.h
 )
 
 add_executable(
-    planner-tst
-    planner_tests.cpp
-    ../communication/stream_reader.cpp
-    communication/test_stream_reader.cpp 
-    
+  unittest
+  planner_tests.cpp
+  control/callback_process_pipeline_test.cpp   
+  communication/test_dataset_stream_reader.cpp
+  ../communication/dataset_stream_reader.cpp
 )
 
+if(THREADS_HAVE_PTHREAD_ARG)
+  target_compile_options(unittest PUBLIC "-pthread")
+endif()
+if(CMAKE_THREAD_LIBS_INIT)
+  target_link_libraries(unittest "${CMAKE_THREAD_LIBS_INIT}")
+endif()
+
 # link my-recognition to jetson-inference library
-target_link_libraries(planner-tst PkgConfig::deps  ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
+target_link_libraries(unittest PkgConfig::deps ${GTEST_LIBRARIES} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
