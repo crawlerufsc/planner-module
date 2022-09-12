@@ -13,7 +13,6 @@
 #include "planner.h"
 #include "../tests/utils/debug_utils.h"
 
-
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 namespace oc = ompl::control;
@@ -21,21 +20,40 @@ namespace oc = ompl::control;
 /**
  * OMPL implementation of path planning
  */
-class OMPLPlanner : public Planner
+class OMPLPlanner : public PathPlanner
 {
 private:
+    inline static OMPLPlanner *pinstance_ = nullptr;
+    inline static std::mutex singletonMtx;
+
     std::shared_ptr<ob::SE2StateSpace> state_space;
     ob::RealVectorBounds *state_space_bounds;
+
     std::shared_ptr<oc::RealVectorControlSpace> control_space;
     ob::RealVectorBounds *control_space_bounds;
+
     std::shared_ptr<oc::SpaceInformation> space_info;
     oc::SimpleSetup *ompl_simple_setup;
 
-    int width;
-    int height;
-    int camera_distance;
+    inline static int ogWidth = 0;
+    inline static int ogHeight = 0;
+    inline static int cameraDistance = 0;
+
+    inline static int ogCellWidth = 0;
+    inline static int ogCellHeight = 0;
+    inline static int ogCellSize = 0;
+
+    inline static int vehicleSizeLength = 0;
+
     double speed_meters_per_second;
     double steptime_s;
+
+    inline static char *occupancyGrid = nullptr;
+    inline static float *pixelDistanceFromBackground = nullptr;
+
+    double goalStateX, goalStateY;
+
+    // temp
     ImageDebugUtils debugUtils;
 
     inline double degree2rad(double value)
@@ -47,19 +65,51 @@ private:
     {
         this->speed_meters_per_second = speed_meters_per_second;
     }
+
     void setStepTime(double steptime_s)
     {
         this->steptime_s = steptime_s;
     }
 
-    void setup_planning();
+    static inline uint ComputeGridPosWidth(double x)
+    {
+        return (uint)((x + (OMPLPlanner::ogCellWidth / 2)) / OMPLPlanner::ogCellSize);
+    }
 
-public:
-    OMPLPlanner(int width, int height, int camera_distance);
+    static inline uint ComputeGridPosHeight(double y)
+    {
+        return (uint)(OMPLPlanner::ogCellHeight - 1 - (y / OMPLPlanner::ogCellSize));
+    }
+
+    void setupPlanning();
+    void computeMatrixOfDistancesToBackground(cv::Mat *og_mat);
+
+    ob::OptimizationObjectivePtr getThresholdPathLengthObj(const ob::SpaceInformationPtr& si);
+
+    static bool checkStateValid(const ob::State *state);
+    static bool checkStateWithinBorders(const ob::SE2StateSpace::StateType *SE2state, int x, int z);
+    static bool checkStatePositionIsNavegable(int x, int z, int minimalSafeDistanceFromBackground);
+    static void statePropagator(const ob::State *start, const oc::Control *control, const double duration, ob::State *result);
+
+protected:
+    OMPLPlanner(int width, int height, int occupancyGridCellSizeInCm, int cameraDistance, int vehicleSizeLength);
 
     ~OMPLPlanner();
 
+public:
+    OMPLPlanner(OMPLPlanner &other) = delete;
+    void operator=(const OMPLPlanner &) = delete;
+
+    //static void ModuleInitialize() {
+    //    OMPLPlanner::singletonMtx = new std::mutex();
+    //}
+    static OMPLPlanner *GetInstance(int occupancyGridWidth, int occupancyGridHeight, int occupancyGridCellSizeInCm, int cameraDistance, int vehicleSizeLength);
+
+    static void ClearInstance();
+
     void plan(StreamData *data) override;
 };
+
+
 
 #endif

@@ -4,9 +4,10 @@
 class StreamData 
 {
 public:
-    char *data;
+    unsigned char *data;
     int width;
     int height;
+    int mattype;
     size_t raw_length;
 };
 

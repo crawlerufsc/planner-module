@@ -1,9 +1,10 @@
 #ifndef _IMG_DEBUG_UTILS
 #define _IMG_DEBUG_UTILS
 
-#include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
+
+#include "../../utils/image_utils.h"
 
 class ImageDebugUtils
 {
@@ -63,7 +64,27 @@ public:
         initWindow = false;
     }
 
-    void showImage(const char *title, char *data, size_t length)
+    void showImageRaw(const char *title, unsigned char *data, int width, int height)
+    {
+        if (data == nullptr)
+            return;
+
+        cv::Mat *img = new cv::Mat(height, width, CV_8U, data);
+        describeMatrix(*img);
+
+        if (!initWindow)
+        {
+            cv::namedWindow(title);
+        }
+
+        initWindow = true;
+        cv::imshow(title, *img);
+        cv::waitKey(5);
+        delete img;
+    }
+
+
+    void showImageDecode(const char *title, char *data, size_t length)
     {
         if (data == nullptr)
             return;

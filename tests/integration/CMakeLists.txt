@@ -1,6 +1,6 @@
 # require CMake 3.8 or greater
 cmake_minimum_required(VERSION 2.8)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 project(driveless-planner-module-tst)
 
@@ -30,6 +30,7 @@ SET(TARGET_H
     ../../control/execution_control.h
     ../../control/process_pipeline.h
     ../../utils/file_utils.h
+    ../../utils/image_utils.h
     ../../planning/planner.h
     ../../planning/ompl_planner.h
 )

@@ -14,11 +14,12 @@ pkg_check_modules(GST_APP REQUIRED gstreamer-app-1.0)
 pkg_check_modules(GST_VIDEO REQUIRED gstreamer-video-1.0)
 
 find_package(Threads REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # Locate GTest
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
-
+include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(/usr/include/gstreamer-1.0)
 
 
@@ -27,6 +28,7 @@ SET(TARGET_H
   ../control/direct_process_pipeline.h
   ../communication/dataset_stream_reader.h
   ../utils/debug_utils.h
+  ../../utils/data_convert.h
 )
 
 add_executable(
@@ -35,6 +37,7 @@ add_executable(
   control/callback_process_pipeline_test.cpp   
   communication/test_dataset_stream_reader.cpp
   ../communication/dataset_stream_reader.cpp
+  utils/data_convert_test.cpp
 )
 
 if(THREADS_HAVE_PTHREAD_ARG)
@@ -45,4 +48,4 @@ if(CMAKE_THREAD_LIBS_INIT)
 endif()
 
 # link my-recognition to jetson-inference library
-target_link_libraries(unittest PkgConfig::deps ${GTEST_LIBRARIES} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
+target_link_libraries(unittest PkgConfig::deps ${GTEST_LIBRARIES} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES} ${OpenCV_LIBS})

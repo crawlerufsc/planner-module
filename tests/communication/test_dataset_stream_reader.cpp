@@ -3,6 +3,7 @@
 
 #include "../../communication/dataset_stream_reader.h"
 #include "../../utils/file_utils.h"
+#include "../../utils/image_utils.h"
 
 int processFrameCallCount = 0;
 
@@ -14,7 +15,8 @@ void onProcessFrame(DirectProcessPipeline<StreamData> *reader, StreamData *frame
     EXPECT_TRUE(frame != nullptr);
 
     FileData *p = FileUtils::readFile(std::string("communication/occupancy_grid_output_test.png"));
-    EXPECT_EQ(*p->data, *(frame->data));
+    auto decoded = ImageUtils::decodeImageData(p->data, p->length);
+    EXPECT_EQ(*(decoded->data), *(frame->data));
 }
 
 TEST(DataSetStreamReader, ReadSuccess)

@@ -27,6 +27,7 @@ SET(TARGET_H
     communication/stream_data.h
     control/execution_control.h
     control/process_pipeline.h
+    utils/image_utils.h
 )
 
 add_executable(

@@ -31,8 +31,6 @@ public:
         size_t length = static_cast<size_t>(file.tellg());
         file.seekg(0, file.beg);
 
-
-
         FileData *buffer = new FileData(length);
         file.read(buffer->data, length);
         file.close();

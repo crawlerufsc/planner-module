@@ -4,8 +4,9 @@
 #include <string>
 #include <thread>
 #include <chrono>
-
+#include <opencv2/opencv.hpp>
 #include "dataset_stream_reader.h"
+#include "../utils/image_utils.h"
 
 void DataStreamReader::delayFrameRate()
 {
@@ -76,9 +77,13 @@ StreamData * DataStreamReader::onRequestNextFrame()
     //std::cout << "reading: " << filename << "\n";
 
     FileData *p = FileUtils::readFile(filename);
-    result->data = p->data;
-    result->width = width;
-    result->height = height;
+
+    std::vector<char> imgv(p->data, p->data + p->length);
+    cv::Mat img = cv::imdecode(cv::Mat(imgv), 1);
+
+    result->data = img.data;
+    result->width = img.cols;
+    result->height = img.rows;
     result->raw_length = p->length;
     //std::cout << "success\n";
 
@@ -92,7 +97,8 @@ StreamData * DataStreamReader::onRequestNextFrame()
 
     delayFrameRate();
 
-    return result;
+    FileData *p = FileUtils::readFile(filename);
+    return ImageUtils::decodeImageData(p->data, p->length);
 }
 
 void DataStreamReader::onTerminate()

@@ -6,7 +6,7 @@
 /**
  * Interface for path planning handlers
  */
-class Planner
+class PathPlanner
 {
 public:
     virtual void plan(StreamData *data) = 0;
