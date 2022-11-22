@@ -1,12 +1,11 @@
 #ifndef _DATA_STREAM_READER_H
 #define _DATA_STREAM_READER_H
 
-
 #include "../utils/file_utils.h"
-#include "../model/stream_data.h"
+#include "../model/frame.h"
 #include "../control/direct_process_pipeline.h"
 
-class DataStreamReader : public DirectProcessPipeline<StreamData>
+class DataSetStreamReader : public DirectProcessPipeline<Frame<unsigned char>>
 {
 private:
     std::vector<std::string> *input;
@@ -20,17 +19,17 @@ private:
     void delayFrameRate();
 
 public:
-    DataStreamReader(uint32_t width, uint32_t height, uint32_t frameRate);
-    ~DataStreamReader();
+    DataSetStreamReader(uint32_t width, uint32_t height, uint32_t frameRate);
+    ~DataSetStreamReader();
 
-    DataStreamReader *addSource(std::string path);
+    DataSetStreamReader *addSource(std::string path);
     uint32_t GetWidth();
     uint32_t GetHeight();
     uint32_t GetFrameRate();
-    DataStreamReader *repeatFrame(uint32_t times);
+    DataSetStreamReader *repeatFrame(uint32_t times);
 
     bool initialize() override;
-    StreamData * onRequestNextFrame() override;
+    Frame<unsigned char> * onRequestNextFrame() override;
     void onTerminate() override;
 };
 

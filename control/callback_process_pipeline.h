@@ -5,7 +5,7 @@
 #include <mutex>
 #include <thread>
 
-#include "../model/stream_data.h"
+#include "../model/frame.h"
 
 template <typename T>
 class CallbackProcessPipeline

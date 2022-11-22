@@ -8,7 +8,7 @@
 #include "dataset_stream_reader.h"
 #include "../utils/image_utils.h"
 
-void DataStreamReader::delayFrameRate()
+void DataSetStreamReader::delayFrameRate()
 {
     if (frameRate <= 0)
         return;
@@ -17,7 +17,7 @@ void DataStreamReader::delayFrameRate()
     std::this_thread::sleep_for(std::chrono::milliseconds(1000 / frameRate));
 }
 
-DataStreamReader::DataStreamReader(uint32_t width, uint32_t height, uint32_t frameRate)
+DataSetStreamReader::DataSetStreamReader(uint32_t width, uint32_t height, uint32_t frameRate)
 {
     this->input = new std::vector<std::string>();
     this->width = width;
@@ -28,12 +28,12 @@ DataStreamReader::DataStreamReader(uint32_t width, uint32_t height, uint32_t fra
     this->frameRate = frameRate;
 }
 
-DataStreamReader::~DataStreamReader()
+DataSetStreamReader::~DataSetStreamReader()
 {
     delete input;
 }
 
-DataStreamReader *DataStreamReader::addSource(std::string path)
+DataSetStreamReader *DataSetStreamReader::addSource(std::string path)
 {
     if (FileUtils::fileExists(path))
         input->push_back(path);
@@ -41,30 +41,30 @@ DataStreamReader *DataStreamReader::addSource(std::string path)
     return this;
 }
 
-uint32_t DataStreamReader::GetWidth()
+uint32_t DataSetStreamReader::GetWidth()
 {
     return width;
 }
 
-uint32_t DataStreamReader::GetHeight()
+uint32_t DataSetStreamReader::GetHeight()
 {
     return height;
 }
-uint32_t DataStreamReader::GetFrameRate()
+uint32_t DataSetStreamReader::GetFrameRate()
 {
     return frameRate;
 }
-DataStreamReader *DataStreamReader::repeatFrame(uint32_t times)
+DataSetStreamReader *DataSetStreamReader::repeatFrame(uint32_t times)
 {
     this->repeat_for = times;
     return this;
 }
 
-bool DataStreamReader::initialize()
+bool DataSetStreamReader::initialize()
 {
     return true;
 }
-StreamData * DataStreamReader::onRequestNextFrame()
+Frame<unsigned char> * DataSetStreamReader::onRequestNextFrame()
 {
     if (pos >= input->size())
     {
@@ -72,20 +72,6 @@ StreamData * DataStreamReader::onRequestNextFrame()
     }
 
     std::string filename = input->at(pos);
-
-    StreamData *result = new StreamData();
-    //std::cout << "reading: " << filename << "\n";
-
-    FileData *p = FileUtils::readFile(filename);
-
-    std::vector<char> imgv(p->data, p->data + p->length);
-    cv::Mat img = cv::imdecode(cv::Mat(imgv), 1);
-
-    result->data = img.data;
-    result->width = img.cols;
-    result->height = img.rows;
-    result->raw_length = p->length;
-    //std::cout << "success\n";
 
     this->repeat_for_pos++;
 
@@ -98,10 +84,10 @@ StreamData * DataStreamReader::onRequestNextFrame()
     delayFrameRate();
 
     FileData *p = FileUtils::readFile(filename);
-    return ImageUtils::decodeImageData(p->data, p->length);
+    return ImageUtils::decodeImageToOccupancyGrid(p->data, p->length);
 }
 
-void DataStreamReader::onTerminate()
+
+void DataSetStreamReader::onTerminate()
 {
 }
-

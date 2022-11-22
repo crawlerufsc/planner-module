@@ -1,5 +1,8 @@
 all: bin
 
+lib:
+	cd ../control/lib && $(MAKE) all
+
 bin:
 	rm -rf build
 	mkdir -p build

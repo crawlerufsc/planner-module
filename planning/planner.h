@@ -9,7 +9,7 @@
 class PathPlanner
 {
 public:
-    virtual void plan(StreamData *data) = 0;
+    virtual void plan(Frame<unsigned char> *frame) = 0;
 };
 
 #endif

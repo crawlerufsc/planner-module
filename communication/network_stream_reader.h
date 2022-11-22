@@ -6,7 +6,7 @@
 #include <gst/app/app.h>
 #include <stdio.h>
 #include <string>
-#include "../model/stream_data.h"
+#include "../model/frame.h"
 #include "../control/callback_process_pipeline.h"
 
 class NetworkStreamReader : public CallbackProcessPipeline<StreamData>

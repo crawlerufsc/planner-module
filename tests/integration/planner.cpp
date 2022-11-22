@@ -24,24 +24,26 @@
 #include <signal.h>
 #include <stdlib.h>
 
-DataStreamReader *buildInputStreamReader()
+DataSetStreamReader *buildInputStreamReader()
 {
-    DataStreamReader *reader = new DataStreamReader(160, 200, 120);
+    DataSetStreamReader *reader = new DataSetStreamReader(160, 200, 1);
 
-    for (int i = 1; i < 291; i++)
-    {
-        std::stringstream ss;
-        ss << "/home/cristiano/Documents/Projects/Mestrado/Project/dataset/18/og_images/occupancy_grid_output";
+    // for (int i = 1; i < 291; i++)
+    // {
+    //     std::stringstream ss;
+    //     ss << "/home/cristiano/Documents/Projects/Mestrado/Project/dataset/18/og_images/occupancy_grid_output";
 
-        if (i < 10)
-            ss << "0";
-        if (i < 100)
-            ss << "0";
+    //     if (i < 10)
+    //         ss << "0";
+    //     if (i < 100)
+    //         ss << "0";
 
-        ss << i << ".png";
+    //     ss << i << ".png";
 
-        reader->addSource(ss.str());
-    }
+    //     reader->addSource(ss.str());
+    // }
+
+    reader->addSource("og_output_18_083.png");
 
     return reader;
 }
@@ -62,9 +64,9 @@ void handler(int sig)
 
 OMPLPlanner *planner;
 
-static void onProcess(DirectProcessPipeline<StreamData> *reader, StreamData *data)
+static void onProcess(DirectProcessPipeline<Frame<unsigned char>> *reader, Frame<unsigned char> * frame)
 {
-    planner->plan(data);
+    planner->plan(frame);
 }
 
 int main(int argc, char *argv[])
@@ -72,9 +74,10 @@ int main(int argc, char *argv[])
     signal(SIGSEGV, handler);
     planner = OMPLPlanner::GetInstance(160, 200, 5, 1, 40);
 
-    DataStreamReader* reader = buildInputStreamReader();
+    DataSetStreamReader *reader = buildInputStreamReader();
 
-    reader->withOnProcessCallback(onProcess)
+    reader
+        ->withOnProcessCallback(onProcess)
         ->run();
 
     OMPLPlanner::ClearInstance();

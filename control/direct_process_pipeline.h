@@ -5,7 +5,7 @@
 #include <mutex>
 #include <thread>
 #include <iostream>
-#include "../model/stream_data.h"
+#include "../model/frame.h"
 
 template <typename T>
 class DirectProcessPipeline
@@ -14,6 +14,7 @@ private:
     std::mutex *queueFrameProcess;
     bool loop_run;
     T *frame;
+
     void (*onProcess)(DirectProcessPipeline<T> *, T *);
     std::thread *requestFrameThread;
     std::thread *processThread;
@@ -22,57 +23,53 @@ private:
     {
         while (this->loop_run)
         {
-            T *newFrame = this->onRequestNextFrame();
+            T *f = this->onRequestNextFrame();
             this->queueFrameProcess->lock();
-            replaceFrame(newFrame);
+            replaceFrame(f);
             this->queueFrameProcess->unlock();
-            // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+    }
+
+    void replaceFrame(T *f)
+    {
+        if (this->frame != nullptr)
+        {
+            delete this->frame;
+        }
+        this->frame = f;
+        //std::cout << "new frame on " << reinterpret_cast<void *>(this->frame) << std::endl;
     }
 
     void processThr()
     {
-        if (this->onProcess == nullptr) {
+        if (this->onProcess == nullptr)
+        {
             return;
         }
 
-        T *procFrame = nullptr;
-
         while (this->loop_run)
         {
-            this->queueFrameProcess->lock();
 
+            T *procFrame = nullptr;
+            this->queueFrameProcess->lock();
             if (this->frame != nullptr)
             {
                 procFrame = this->frame;
                 this->frame = nullptr;
-                //std::cout << "capturing frame for processing "<< reinterpret_cast<void *>(procFrame) << std::endl;
             }
-
             this->queueFrameProcess->unlock();
 
             if (procFrame != nullptr)
             {
+                //std::cout << "processing frame " << reinterpret_cast<void *>(procFrame) << std::endl;
                 this->onProcess(this, procFrame);
-                //std::cout << "removing after oricessing "<< reinterpret_cast<void *>(procFrame) << std::endl;
                 delete procFrame;
-                procFrame = nullptr;
-
             }
         }
     }
 
-    void replaceFrame(T *newFrame)
-    {
-        if (this->frame != nullptr) {
-            //std::cout << "deleting old frame "<< reinterpret_cast<void *>(this->frame) << std::endl;
-            delete this->frame;
-        }
-
-        this->frame = newFrame;
-        //std::cout << "new frame "<< reinterpret_cast<void *>(this->frame) << std::endl;
-    }
-
+    // std::cout << "new frame "<< reinterpret_cast<void *>(this->frame) << std::endl;
 protected:
     virtual bool initialize() = 0;
     virtual T *onRequestNextFrame() = 0;
@@ -113,7 +110,6 @@ public:
         loop_run = initialize();
         requestFrameThread = new std::thread(&DirectProcessPipeline::requestFrameThr, this);
         processThread = new std::thread(&DirectProcessPipeline::processThr, this);
-
         if (block)
             wait();
     }

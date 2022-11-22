@@ -12,6 +12,8 @@
 #include <ompl/util/String.h>
 #include "planner.h"
 #include "../tests/utils/debug_utils.h"
+#include "../model/planning_waypoint.h"
+#include "planning_data.h"
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -48,13 +50,26 @@ private:
     double speed_meters_per_second;
     double steptime_s;
 
-    inline static char *occupancyGrid = nullptr;
-    inline static float *pixelDistanceFromBackground = nullptr;
+    inline static Frame<unsigned char> *occupancyGrid = nullptr;
+    inline static Frame<float> *pixelDistanceFromBackground = nullptr;
+    inline static SkeletonizeData *skeletonizedData = nullptr;
+    inline static Frame<unsigned char> *transformedOccupancyGridProcBuffer = nullptr;
+    inline static Frame<unsigned char> *skeletonizedOccupancyGridProcBuffer = nullptr;
+
+    std::pair<int, int> *min_dist_crawler_pixel;
 
     double goalStateX, goalStateY;
+    PathPlanningData *planningData;
+
+    
 
     // temp
     ImageDebugUtils debugUtils;
+
+    static int convertMatrixToVectorPos(int width, int heightPos, int widthPos)
+    {
+        return (width * heightPos) + widthPos;
+    }
 
     inline double degree2rad(double value)
     {
@@ -81,15 +96,34 @@ private:
         return (uint)(OMPLPlanner::ogCellHeight - 1 - (y / OMPLPlanner::ogCellSize));
     }
 
+    inline double calculate_dist2crawler(Point &p)
+    {
+        return ((this->occupancyGrid->width / 2.0) - p.X) * ((this->occupancyGrid->width / 2.0) - pixel.X) +
+               (this->occupancyGrid->height - p.Y) * (this->occupancyGrid->height - p.Y);
+    }
+
+
     void setupPlanning();
     void computeMatrixOfDistancesToBackground(cv::Mat *og_mat);
 
-    ob::OptimizationObjectivePtr getThresholdPathLengthObj(const ob::SpaceInformationPtr& si);
+    ob::OptimizationObjectivePtr getThresholdPathLengthObj(const ob::SpaceInformationPtr &si);
 
     static bool checkStateValid(const ob::State *state);
     static bool checkStateWithinBorders(const ob::SE2StateSpace::StateType *SE2state, int x, int z);
     static bool checkStatePositionIsNavegable(int x, int z, int minimalSafeDistanceFromBackground);
     static void statePropagator(const ob::State *start, const oc::Control *control, const double duration, ob::State *result);
+
+    void preProcessOccupancyGridFrame();
+    void initializeOccupancyGridBuffers(int width, int height);
+    void skeletonizeOccupancyGrid();
+    void get_start_point_and_connections();
+    void copyOccupancyGrid(StreamData *frame);
+    void bfs();
+    void get_max_dist_crawler_pixel();
+    void get_min_dist_checkpoint_pixel();
+    void get_min_or_max_pixel();
+    double get_median_contour_distance();
+    void get_path();
 
 protected:
     OMPLPlanner(int width, int height, int occupancyGridCellSizeInCm, int cameraDistance, int vehicleSizeLength);
@@ -100,16 +134,11 @@ public:
     OMPLPlanner(OMPLPlanner &other) = delete;
     void operator=(const OMPLPlanner &) = delete;
 
-    //static void ModuleInitialize() {
-    //    OMPLPlanner::singletonMtx = new std::mutex();
-    //}
     static OMPLPlanner *GetInstance(int occupancyGridWidth, int occupancyGridHeight, int occupancyGridCellSizeInCm, int cameraDistance, int vehicleSizeLength);
 
     static void ClearInstance();
 
-    void plan(StreamData *data) override;
+    void plan(Frame<unsigned char> *frame) override;
 };
-
-
 
 #endif

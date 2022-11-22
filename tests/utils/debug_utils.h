@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../../utils/image_utils.h"
+#include "../../model/stream_data.h"
 
 class ImageDebugUtils
 {
@@ -64,12 +65,12 @@ public:
         initWindow = false;
     }
 
-    void showImageRaw(const char *title, unsigned char *data, int width, int height)
+    void showImageRaw(const char *title, Frame<unsigned char> *frame)
     {
-        if (data == nullptr)
+        if (frame == nullptr)
             return;
 
-        cv::Mat *img = new cv::Mat(height, width, CV_8U, data);
+        cv::Mat *img = ImageUtils::convertToOpenCVMatrix(frame);
         describeMatrix(*img);
 
         if (!initWindow)
@@ -82,7 +83,19 @@ public:
         cv::waitKey(5);
         delete img;
     }
+    void showImageRaw(const char *title, cv::Mat &img)
+    {
+        describeMatrix(img);
 
+        if (!initWindow)
+        {
+            cv::namedWindow(title);
+        }
+
+        initWindow = true;
+        cv::imshow(title, img);
+        cv::waitKey(5);
+    }
 
     void showImageDecode(const char *title, char *data, size_t length)
     {

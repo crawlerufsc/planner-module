@@ -23,7 +23,7 @@ TEST(DataSetStreamReader, ReadSuccess)
 {
     int frameRate = 50;
 
-    DirectProcessPipeline<StreamData> *reader = (new DataStreamReader(160, 200, frameRate))
+    DirectProcessPipeline<StreamData> *reader = (new DataSetStreamReader(160, 200, frameRate))
                                                     ->addSource(std::string("communication/occupancy_grid_output_test.png"))
                                                     ->withOnProcessCallback(&onProcessFrame);
 

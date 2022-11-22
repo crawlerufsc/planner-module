@@ -29,6 +29,10 @@ SET(TARGET_H
   ../communication/dataset_stream_reader.h
   ../utils/debug_utils.h
   ../../utils/data_convert.h
+  ../../model/frame.h
+  ../../model/planning_waypoint.h
+  ../../planning/ompl_skeletonize.h
+
 )
 
 add_executable(
@@ -38,6 +42,9 @@ add_executable(
   communication/test_dataset_stream_reader.cpp
   ../communication/dataset_stream_reader.cpp
   utils/data_convert_test.cpp
+  model/frame_test.cpp
+  model/planning_waypoint_test.cpp
+  planning/ompl/ompl_skeletonize_test.cpp
 )
 
 if(THREADS_HAVE_PTHREAD_ARG)

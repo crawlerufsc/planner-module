@@ -21,20 +21,30 @@ pkg_check_modules(GST_VIDEO REQUIRED gstreamer-video-1.0)
 
 include_directories(/usr/include/gstreamer-1.0)
 
+# control lib
+find_library(CONTROL_LIB REQUIRED
+    NAMES crawler_control
+    HINTS "${CMAKE_PREFIX_PATH}../control/lib"
+)
+include_directories(../control/lib/include)
 
 SET(TARGET_H
     communication/network_stream_reader.h
     communication/stream_data.h
-    control/execution_control.h
-    control/process_pipeline.h
+    control/execution_controller.h
+    control/callback_process_pipeline.h
     utils/image_utils.h
+    model/frame.h
+    model/planning_waypoint.h
 )
 
 add_executable(
     planner-bin 
     planner.cpp 
     communication/network_stream_reader.cpp
+    control/execution_controller.cpp
+    control/manual_control_api.cpp
 )
 
 # link my-recognition to jetson-inference library
-target_link_libraries(planner-bin PkgConfig::deps ${OpenCV_LIBS} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
+target_link_libraries(planner-bin PkgConfig::deps ${OpenCV_LIBS} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES} ${CONTROL_LIB})

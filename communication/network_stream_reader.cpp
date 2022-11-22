@@ -45,10 +45,9 @@ StreamData *NetworkStreamReader::readStreamData(GstAppSink *sink)
     GstMapInfo map;
     gst_buffer_map(buffer, &map, GST_MAP_READ);
 
-    StreamData *result = new StreamData();
-    result->data = map.data;
-    result->width = g_value_get_int(gst_structure_get_value(structure, "width"));
-    result->height = g_value_get_int(gst_structure_get_value(structure, "height"));
+    int width = g_value_get_int(gst_structure_get_value(structure, "width"));
+    int height = g_value_get_int(gst_structure_get_value(structure, "height"));
+    StreamData *result = new StreamData(width, height, map.data, 0);
 
     // gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);

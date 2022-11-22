@@ -17,8 +17,11 @@
 #include <queue>
 #include <mutex>
 #include "communication/network_stream_reader.h"
+#include "control/vehicle_controller.h"
+#include "control/manual_control_api.h"
 
 NetworkStreamReader *reader;
+
 
 void onProcess(StreamData * frame) {
 
@@ -40,6 +43,11 @@ int main(int argc, char *argv[])
         ->withBufferSize(1)
         ->withOnProcessCallback(onProcess);
 
+    VehicleController *vehicleController = new VehicleController();
+
+    ManualControlAPI *manualControlAPI = new ManualControlAPI(vehicleController);
+    manualControlAPI->initialize();
+
     while (!reader->isConnected()) {
         if (firstConnect)
             printf ("Connecting to %s:%d -> %d...\n", argv[1], serverPort, localPort);
@@ -52,6 +60,8 @@ int main(int argc, char *argv[])
         
         if (reader->isConnected())
             reader->run();
+
+        
     }
 
     return 0;
