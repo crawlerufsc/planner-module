@@ -14,7 +14,7 @@ char menu(VehicleData *data)
     std::string ms;
     std::string ack;
 
-    if (data != nullptr && data->sterringAngle < 0)
+    if (data != nullptr && data->sterringAngle < 45)
         hs = "[-]";
     else
         hs = "[+]";
@@ -70,93 +70,6 @@ void restoreTerminal(int oldFlags)
 #define DEVICE "/dev/ttyUSB0"
 //#define DEVICE "/dev/ttyACM0"
 
-ManualControlAPI *init_server()
-{
-    VehicleController *vehicleController = new VehicleController(DEVICE);
-
-    ManualControlAPI *manualControlAPI = new ManualControlAPI(vehicleController);
-    manualControlAPI->initialize();
-    return manualControlAPI;
-}
-
-class RemoteController : public mosqpp::mosquittopp
-{
-private:
-    char *host_addr;
-    int port;
-    std::thread *mqttLoopThr;
-
-    void runMqttLoop() {
-        loop_forever();
-    }
-
-public:
-    RemoteController()
-    {
-        this->host_addr = strdup("127.0.0.1");
-        this->port = 1883;
-        //this->username_pw_set("crawler", "435FKDVpp48ddf");
-        this->mqttLoopThr = new std::thread(&RemoteController::runMqttLoop, this);
-        connect(host_addr, port, 60);
-    }
-
-    ~RemoteController()
-    {
-        disconnect();
-        free(host_addr);
-    }
-
-    void requestForwardIncrement()
-    {
-        int message_id = 1;
-        char *p = (char *)malloc(sizeof(char) * 2);
-        p[0] = CMD_INCREASE_SPEED;
-        p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
-    }
-
-    void requestForwardDecrement()
-    {
-        int message_id = 1;
-        char *p = (char *)malloc(sizeof(char) * 2);
-        p[0] = CMD_DECREASE_SPEED;
-        p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
-    }
-
-    void requestLeftIncrement()
-    {
-        int message_id = 1;
-        char *p = (char *)malloc(sizeof(char) * 2);
-        p[0] = CMD_INC_TURN_LEFT;
-        p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
-    }
-
-    void requestRightIncrement()
-    {
-        int message_id = 1;
-        char *p = (char *)malloc(sizeof(char) * 2);
-        p[0] = CMD_INC_TURN_RIGHT;
-        p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
-    }
-
-    void requestReset()
-    {
-        int message_id = 1;
-        char *p = (char *)malloc(sizeof(char) * 2);
-        p[0] = CMD_RST;
-        p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
-    }
-
-    void on_message(const struct mosquitto_message *message)
-    {
-        
-    }
-};
-
 int main(int argc, char *argv[])
 {
     if (!FileUtils::fileExists(std::string(DEVICE)))
@@ -165,37 +78,34 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    ManualControlAPI *server = init_server();
+   VehicleController *vehicleController = new VehicleController(DEVICE);  
 
     // client for the MQTT messaging bus
 
-    RemoteController controller;
     bool run = true;
 
     auto flags = setupTerminal();
 
-    printf ("initialized\n");
-
     while (run)
     {
-        char ch = menu(server->getVehicleData());
+        char ch = menu(vehicleController->getVehicleData());
 
         switch (ch)
         {
         case 'w':
-            controller.requestForwardIncrement();
+            vehicleController->forwardIncrease(50);
             break;
         case 's':
-            controller.requestForwardDecrement();
+            vehicleController->forwardIncrease(-50);
             break;
         case 'a':
-            controller.requestLeftIncrement();
+            vehicleController->increaseTurnLeftAngle(5);
             break;
         case 'd':
-            controller.requestRightIncrement();
+            vehicleController->increaseTurnRightAngle(5);
             break;
         case 'q':
-            controller.requestReset();
+            vehicleController->stop();
             break;
         case 27:
             run = false;
@@ -209,5 +119,7 @@ int main(int argc, char *argv[])
     }
 
     restoreTerminal(flags);
+    return 0;
+
     return 0;
 }

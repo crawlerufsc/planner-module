@@ -9,6 +9,7 @@ bin:
 	cd build && cmake ..
 	cd build && make
 	mv build/manual_ctrl_tst .
+	mv build/vehicle_control_tst .
 	rm -rf build
 
 clean:

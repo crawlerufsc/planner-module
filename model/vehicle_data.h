@@ -9,13 +9,17 @@ public:
     IMUData *imu;
     GPSData *gps;
     int forwardPower;
-    uint8_t frontAngle;
-    uint8_t backAngle;
+    int sterringAngle;
 
     VehicleData()
     {
+        forwardPower = 0;
+        sterringAngle = 0;
         imu = nullptr;
         gps = nullptr;
+
+        imu = new IMUData();
+        gps = new GPSData();
     }
 
     ~VehicleData()
@@ -27,23 +31,42 @@ public:
             delete gps;
     }
 
-    VehicleData *clone() {
-        VehicleData * p = new VehicleData();
-        p->frontAngle = frontAngle;
-        p->backAngle = backAngle;
+    void copy(VehicleData *p) {
+        p->sterringAngle = sterringAngle;
         p->forwardPower = forwardPower;
-        p->imu = imu->clone();
-        p->gps = gps->clone();
+        imu->copy(p->imu);
+        gps->copy(p->gps);
     }
 
-    const char *toJson() {
+    VehicleData *clone()
+    {
+        VehicleData *p = new VehicleData();
+        p->sterringAngle = sterringAngle;
+        p->forwardPower = forwardPower;
+        if (imu != nullptr)
+            p->imu = imu->clone();
+        if (gps != nullptr)
+            p->gps = gps->clone();
+        return p;
+    }
+
+    const char *toJson()
+    {
         std::stringstream ss;
         ss << "{\n";
-        ss << "'forwardPower' : " << forwardPower << "\n";
-        ss << "'frontAngle' : " << frontAngle << "\n";
-        ss << "'backAngle' : " << backAngle << "\n";
-        ss << "'imu' : " << imu.toJson() << "\n";
-        ss << "'gps' : " << gps.toJson() << "\n";
+        ss << "'forwardPower' : " << forwardPower << ",\n";
+        ss << "'sterringAngle' : " << sterringAngle << ",\n";
+
+        if (imu != nullptr)
+            ss << "'imu' : " << imu->toJson() << ",\n";
+        else
+            ss << "'imu' : {},\n";
+
+        if (gps != nullptr)
+            ss << "'gps' : " << gps->toJson() << ",\n";
+        else
+            ss << "'gps' : {}\n";
+
         ss << "}\n";
         return ss.str().c_str();
     }

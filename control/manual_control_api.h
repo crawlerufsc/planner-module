@@ -13,11 +13,11 @@
 #define CAR_STATUS_TOPIC "/crawler/status"
 #define CAR_CMD_TOPIC "/crawler/cmd"
 
-#define CMD_INCREASE_SPEED 1
-#define CMD_DECREASE_SPEED 2
-#define CMD_INC_TURN_RIGHT 3
-#define CMD_INC_TURN_LEFT 4
-#define CMD_RST 5
+#define CMD_INCREASE_SPEED '1'
+#define CMD_DECREASE_SPEED '2'
+#define CMD_INC_TURN_RIGHT '3'
+#define CMD_INC_TURN_LEFT '4'
+#define CMD_RST '5'
 
 class ManualControlAPI : public mosqpp::mosquittopp
 {
@@ -27,7 +27,7 @@ private:
     VehicleController *vehicleController;
     std::thread *statusPublishThr;
     std::thread *runMqttLoopThr;
-    
+
     unsigned int messageId;
     bool isConnected;
     bool isRunning;
@@ -41,9 +41,11 @@ private:
 
     void on_message(const struct mosquitto_message *message)
     {
+        printf("received message on topic %s\n", message->topic);
+
         if (!strcmp(message->topic, CAR_CMD_TOPIC))
         {
-            uint8_t *msg = (uint8_t *)malloc(message->payloadlen);
+            char *msg = (char *)malloc(message->payloadlen);
             memcpy(msg, message->payload, message->payloadlen);
 
             if (message->payloadlen < 1)
@@ -52,18 +54,25 @@ private:
             switch (msg[0])
             {
             case CMD_RST:
+                printf("exec stop\n");
+
                 vehicleController->stop();
                 break;
             case CMD_INCREASE_SPEED:
+                printf("exec forwardIncrease(25)\n");
+
                 vehicleController->forwardIncrease(25);
                 break;
             case CMD_DECREASE_SPEED:
+                printf("exec forwardIncrease(-25)\n");
                 vehicleController->forwardIncrease(-25);
                 break;
             case CMD_INC_TURN_LEFT:
+                printf("exec increaseTurnLeftAngle(5)\n");
                 vehicleController->increaseTurnLeftAngle(5);
                 break;
             case CMD_INC_TURN_RIGHT:
+                printf("exec increaseTurnRightAngle(5)\n");
                 vehicleController->increaseTurnRightAngle(5);
                 break;
             default:
@@ -80,11 +89,13 @@ private:
         connect(this->host, this->port, 60);
     }
 
-    void statusPublish() {
-        while (isConnected) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            VehicleData * data = vehicleController->getVehicleData();
-            const char * payload = data->toJson();
+    void statusPublish()
+    {
+        while (isConnected)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            VehicleData *data = vehicleController->getVehicleData();
+            const char *payload = data->toJson();
             int messageId = getNextMessageId();
             publish(&messageId, CAR_STATUS_TOPIC, strlen(payload), payload, 1);
         }
@@ -104,8 +115,14 @@ private:
         statusPublishThr = new std::thread(&ManualControlAPI::statusPublish, this);
     }
 
-    void runMqttLoop() {
-        loop();
+    void runMqttLoop()
+    {
+        loop_forever();
+        // while (isRunning)
+        // {
+        //     loop();
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        // }
     }
 
 public:
@@ -117,13 +134,17 @@ public:
         this->messageId = -1;
         this->isConnected = false;
         this->isRunning = false;
-        //this->username_pw_set(BROKER_USER, BROKER_PWD);
+        // this->username_pw_set(BROKER_USER, BROKER_PWD);
     }
 
     void initialize()
     {
-        connect(this->host, this->port, 60);
+        connect_async(this->host, this->port, 60);
         runMqttLoopThr = new std::thread(&ManualControlAPI::runMqttLoop, this);
     }
 
+    VehicleData *getVehicleData()
+    {
+        return vehicleController->getVehicleData();
+    }
 };

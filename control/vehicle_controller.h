@@ -15,11 +15,11 @@ private:
     bool isManualControl;
 
 public:
-    VehicleController();
+    VehicleController(const char * arduinoDevice);
     ~VehicleController();
 
     void setManualControl();
-    void forwardIncrease(uint8_t increaseValue);
+    void forwardIncrease(int increaseValue);
     void increaseTurnLeftAngle(uint8_t increaseValue);
     void increaseTurnRightAngle(uint8_t increaseValue);
     void sensorIMUData(ResponseData *p);

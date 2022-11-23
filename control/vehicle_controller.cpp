@@ -4,34 +4,30 @@
 
 using namespace std::placeholders;
 
-VehicleController::VehicleController()
+VehicleController::VehicleController(const char *arduinoDevice)
 {
-    crawlerHAL = new CrawlerHAL("/dev/ttyUSB0");
+    crawlerHAL = new CrawlerHAL(arduinoDevice);
+    status = new VehicleData();
+
     isManualControl = false;
 
-    std::function<void(ResponseData *)> imuCallback = std::bind(&VehicleController::sensorIMUData, this, std::placeholders::_1);
-    crawlerHAL->addCallbackHandler(SENSOR_IMU, imuCallback);
+    // std::function<void(ResponseData *)> imuCallback = std::bind(&VehicleController::sensorIMUData, this, std::placeholders::_1);
+    // crawlerHAL->addCallbackHandler(SENSOR_IMU, imuCallback);
 
-    std::function<void(ResponseData *)> gpsCallback = std::bind(&VehicleController::sensorGPSData, this, std::placeholders::_1);
-    crawlerHAL->addCallbackHandler(SENSOR_GPS, gpsCallback);
+    // std::function<void(ResponseData *)> gpsCallback = std::bind(&VehicleController::sensorGPSData, this, std::placeholders::_1);
+    // crawlerHAL->addCallbackHandler(SENSOR_GPS, gpsCallback);
 
     stop();
 }
 
 void VehicleController::sensorIMUData(ResponseData *p)
 {
-    if (status->imu != nullptr)
-        delete status->imu;
-
-    status->imu = CrawlerHAL::parseData_IMU(p);
+    CrawlerHAL::parseData_IMU(p, status->imu);
 }
 
 void VehicleController::sensorGPSData(ResponseData *p)
 {
-    if (status->gps != nullptr)
-        delete status->gps;
-
-    status->gps = CrawlerHAL::parseData_GPS(p);
+    CrawlerHAL::parseData_GPS(p, status->gps);
 }
 
 VehicleController::~VehicleController()
@@ -40,7 +36,7 @@ VehicleController::~VehicleController()
     delete crawlerHAL;
 }
 
-void VehicleController::forwardIncrease(uint8_t increaseValue)
+void VehicleController::forwardIncrease(int increaseValue)
 {
     status->forwardPower += increaseValue;
     if (status->forwardPower > 250)
@@ -52,52 +48,31 @@ void VehicleController::forwardIncrease(uint8_t increaseValue)
         status->forwardPower = -250;
     }
 
-    if (status->forwardPower >= 0)
+    if (status->forwardPower >= 0) {
+        printf ("crawlerHAL->setEngineForward(%d)\n", status->forwardPower);
         crawlerHAL->setEngineForward(status->forwardPower);
-    else if (status->forwardPower == 0)
+    }
+    else if (status->forwardPower == 0) {
+        printf ("crawlerHAL->setEngineStop()\n");
         crawlerHAL->setEngineStop();
-    else
+    } else {
+        printf ("crawlerHAL->setEngineBackward(%d)\n", -status->forwardPower);
         crawlerHAL->setEngineBackward(-status->forwardPower);
+    }
 }
+
+
 
 void VehicleController::increaseTurnLeftAngle(uint8_t increaseValue)
 {
-    status->frontAngle -= increaseValue;
-
-    if (status->frontAngle < 0)
-        status->frontAngle = 0;
-    if (status->frontAngle > 90)
-        status->frontAngle = 90;
-
-    status->backAngle += increaseValue;
-
-    if (status->backAngle < 0)
-        status->backAngle = 0;
-    if (status->backAngle > 90)
-        status->backAngle = 90;
-
-    crawlerHAL->setWheelFrontAngle(status->frontAngle);
-    crawlerHAL->setWheelBackAngle(status->backAngle);
+    status->sterringAngle -= increaseValue;
+    crawlerHAL->setSteeringAngle(status->sterringAngle);
 }
 
 void VehicleController::increaseTurnRightAngle(uint8_t increaseValue)
 {
-    status->frontAngle += increaseValue;
-
-    if (status->frontAngle < 0)
-        status->frontAngle = 0;
-    if (status->frontAngle > 90)
-        status->frontAngle = 90;
-
-    status->backAngle -= increaseValue;
-
-    if (status->backAngle < 0)
-        status->backAngle = 0;
-    if (status->backAngle > 90)
-        status->backAngle = 90;
-
-    crawlerHAL->setWheelFrontAngle(status->frontAngle);
-    crawlerHAL->setWheelBackAngle(status->backAngle);
+    status->sterringAngle += increaseValue;
+    crawlerHAL->setSteeringAngle(status->sterringAngle);
 }
 
 void VehicleController::setManualControl()
@@ -107,13 +82,18 @@ void VehicleController::setManualControl()
 
 VehicleData *VehicleController::getVehicleData()
 {
+    if (status == nullptr) {
+        return new VehicleData();
+    }
     return status->clone();
 }
 
 void VehicleController::stop()
 {
     crawlerHAL->setEngineStop();
-    status->forwardPower = 0;
-    status->frontAngle = 45;
-    status->backAngle = 45;
+    if (status != nullptr)
+    {
+        status->forwardPower = 0;
+        status->sterringAngle = 0;
+    }
 }
