@@ -2,27 +2,43 @@
 #include <termios.h>
 #include <unistd.h>
 #include <string>
-#include <mosquittopp.h>
-#include "../../control/vehicle_controller.h"
-#include "../../control/manual_control_api.h"
-#include "../../model/vehicle_data.h"
 #include "../../utils/file_utils.h"
+#include <crawler_hal.h>
+#include "../../control/vehicle_controller.h"
 
-char menu(VehicleData *data)
+class DriveSetting
+{
+public:
+    int headingAngle;
+    int movingPower;
+
+    DriveSetting()
+    {
+        headingAngle = 0;
+        movingPower = 0;
+    }
+};
+
+char menu(DriveSetting &settings, bool lastAck)
 {
     std::string hs;
     std::string ms;
     std::string ack;
 
-    if (data != nullptr && data->sterringAngle < 45)
-        hs = "[-]";
-    else
+    if (settings.headingAngle >= 0)
         hs = "[+]";
-
-    if (data != nullptr && data->forwardPower < 0)
-        ms = "[-]";
     else
+        hs = "[-]";
+
+    if (settings.headingAngle >= 0)
         ms = "[+]";
+    else
+        ms = "[-]";
+
+    if (lastAck)
+        ack = "ACK";
+    else
+        ack = "-";
 
     // system("clear");
     printf("Hardware testing menu\n\n");
@@ -30,18 +46,10 @@ char menu(VehicleData *data)
     printf("left pwr++   (a)       (d)      right pwr++\n");
     printf("                  (s)       backward pwr++\n");
     printf("\n\n");
-
-    if (data != nullptr)
-    {
-        printf(">>>> moving wheeldrive: H: %s, power: %d\n", ms.c_str(), data->forwardPower);
-        printf("<--> heading wheeldrive: H: %s, angle: %d\n", hs.c_str(), data->sterringAngle);
-    }
-    else
-    {
-        printf(">>>> moving wheeldrive: H: ?, power: ?\n");
-        printf(">>>> heading wheeldrive: H: ?, power: ?\n");
-    }
-
+    printf(">>>> moving wheeldrive: H: %s, power: %d\n", ms.c_str(), settings.movingPower);
+    printf("<--> heading wheeldrive: H: %s, angle: %d\n", hs.c_str(), settings.headingAngle);
+    printf("\n\n");
+    printf("last command status: %s\n", ack.c_str());
     printf("\n\n");
     printf("(q) stop\n");
     printf("(Esc) to quit\n\n");
@@ -67,45 +75,50 @@ void restoreTerminal(int oldFlags)
     tcsetattr(STDIN_FILENO, TCSANOW, &term_flags);
 }
 
+static struct termios oldt;
+
 #define DEVICE "/dev/ttyUSB0"
 //#define DEVICE "/dev/ttyACM0"
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-    if (!FileUtils::fileExists(std::string(DEVICE)))
+    if (!FileUtils::fileExists(DEVICE))
     {
         printf("%s not found", DEVICE);
         return 1;
     }
 
-   VehicleController *vehicleController = new VehicleController(DEVICE);  
+    auto flags = setupTerminal();
+    VehicleController::initialize(DEVICE);
+    
 
-    // client for the MQTT messaging bus
+    DriveSetting settings;
 
     bool run = true;
-
-    auto flags = setupTerminal();
+    bool stop = false;
+    bool lastAck = false;
 
     while (run)
     {
-        char ch = menu(vehicleController->getVehicleData());
+        char ch = menu(settings, lastAck);
+        stop = false;
 
         switch (ch)
         {
         case 'w':
-            vehicleController->forwardIncrease(50);
+             lastAck = VehicleController::getInstance()->forwardIncrease(25);
             break;
         case 's':
-            vehicleController->forwardIncrease(-50);
+             lastAck = VehicleController::getInstance()->forwardIncrease(-25);
             break;
         case 'a':
-            vehicleController->increaseTurnLeftAngle(5);
+             lastAck = VehicleController::getInstance()->increaseTurnLeftAngle(5);
             break;
         case 'd':
-            vehicleController->increaseTurnRightAngle(5);
+             lastAck = VehicleController::getInstance()->increaseTurnRightAngle(5);
             break;
         case 'q':
-            vehicleController->stop();
+             lastAck = VehicleController::getInstance()->stop();
             break;
         case 27:
             run = false;
@@ -119,7 +132,5 @@ int main(int argc, char *argv[])
     }
 
     restoreTerminal(flags);
-    return 0;
-
     return 0;
 }

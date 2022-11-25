@@ -18,24 +18,24 @@ def crawler_api_welcome():
 def requestIncreaseSpeed():
     client = setup()
     client.publish(topic="/crawler/cmd", payload="1", retain=True)
-    return "OK"
+    return "{ 'result': 'true' }"
     
 
 @app.route("/speed/dec")
 def requestDecreaseSpeed():
     client = setup()
     client.publish(topic="/crawler/cmd", payload="2", retain=True)
-    return "OK"
+    return "{ 'result': 'true' }"
 
 @app.route("/turn/right")
 def requestIncreaseTurnRight():
     client = setup()
     client.publish(topic="/crawler/cmd", payload="3", retain=True)
-    return "OK"
+    return "{ 'result': 'true' }"
 
 @app.route("/turn/left")
 def requestIncreaseTurnLeft():
     client = setup()
     client.publish(topic="/crawler/cmd", payload="4", retain=True)
-    return "OK"
+    return "{ 'result': 'true' }"
 

@@ -10,24 +10,43 @@
 class VehicleController
 {
 private:
-    CrawlerHAL *crawlerHAL;
     VehicleData *status;
     bool isManualControl;
 
-public:
-    VehicleController(const char * arduinoDevice);
-    ~VehicleController();
-
-    void setManualControl();
-    void forwardIncrease(int increaseValue);
-    void increaseTurnLeftAngle(uint8_t increaseValue);
-    void increaseTurnRightAngle(uint8_t increaseValue);
     void sensorIMUData(ResponseData *p);
     void sensorGPSData(ResponseData *p);
 
+    VehicleController(const CrawlerHAL &) = delete;
+    VehicleController();
+
+public:
+    ~VehicleController();
+
+    static VehicleController *_instance;
+
+    static void initialize(const char *device)
+    {
+        CrawlerHAL::initialize(device);
+
+        if (VehicleController::_instance != nullptr)
+            delete VehicleController::_instance;
+
+        VehicleController::_instance = new VehicleController();
+    }
+
+    static VehicleController *getInstance()
+    {
+        return VehicleController::_instance;
+    };
+
+    void setManualControl();
+    bool forwardIncrease(int increaseValue);
+    bool increaseTurnLeftAngle(uint8_t increaseValue);
+    bool increaseTurnRightAngle(uint8_t increaseValue);
+
     VehicleData *getVehicleData();
 
-    void stop();
+    bool stop();
 };
 
 #endif

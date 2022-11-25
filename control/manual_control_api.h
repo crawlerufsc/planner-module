@@ -19,12 +19,14 @@
 #define CMD_INC_TURN_LEFT '4'
 #define CMD_RST '5'
 
+// https://levelup.gitconnected.com/building-an-api-in-c-with-pistache-413247535fd3
+// https://github.com/pistacheio/pistache
+
 class ManualControlAPI : public mosqpp::mosquittopp
 {
 private:
     char *host;
     int port;
-    VehicleController *vehicleController;
     std::thread *statusPublishThr;
     std::thread *runMqttLoopThr;
 
@@ -32,119 +34,30 @@ private:
     bool isConnected;
     bool isRunning;
 
-    int getNextMessageId()
-    {
-        if (messageId > 1000000)
-            messageId = -1;
-        return ++messageId;
-    }
-
-    void on_message(const struct mosquitto_message *message)
-    {
-        printf("received message on topic %s\n", message->topic);
-
-        if (!strcmp(message->topic, CAR_CMD_TOPIC))
-        {
-            char *msg = (char *)malloc(message->payloadlen);
-            memcpy(msg, message->payload, message->payloadlen);
-
-            if (message->payloadlen < 1)
-                return;
-
-            switch (msg[0])
-            {
-            case CMD_RST:
-                printf("exec stop\n");
-
-                vehicleController->stop();
-                break;
-            case CMD_INCREASE_SPEED:
-                printf("exec forwardIncrease(25)\n");
-
-                vehicleController->forwardIncrease(25);
-                break;
-            case CMD_DECREASE_SPEED:
-                printf("exec forwardIncrease(-25)\n");
-                vehicleController->forwardIncrease(-25);
-                break;
-            case CMD_INC_TURN_LEFT:
-                printf("exec increaseTurnLeftAngle(5)\n");
-                vehicleController->increaseTurnLeftAngle(5);
-                break;
-            case CMD_INC_TURN_RIGHT:
-                printf("exec increaseTurnRightAngle(5)\n");
-                vehicleController->increaseTurnRightAngle(5);
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    void on_disconnect(int rc)
-    {
-        isConnected = false;
-        statusPublishThr->join();
-        delete statusPublishThr;
-        connect(this->host, this->port, 60);
-    }
-
-    void statusPublish()
-    {
-        while (isConnected)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            VehicleData *data = vehicleController->getVehicleData();
-            const char *payload = data->toJson();
-            int messageId = getNextMessageId();
-            publish(&messageId, CAR_STATUS_TOPIC, strlen(payload), payload, 1);
-        }
-    }
-
-    void on_connect(int rc)
-    {
-        if (!rc)
-        {
-            isConnected = true;
-#ifdef DEBUG
-            std::cout << "Connected - code " << rc << std::endl;
-#endif
-        }
-        int id = getNextMessageId();
-        this->subscribe(&id, CAR_CMD_TOPIC, 1);
-        statusPublishThr = new std::thread(&ManualControlAPI::statusPublish, this);
-    }
-
-    void runMqttLoop()
-    {
-        loop_forever();
-        // while (isRunning)
-        // {
-        //     loop();
-        //     std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        // }
-    }
+    int getNextMessageId();
+    void on_message(const struct mosquitto_message *message);
+    void on_disconnect(int rc);
+    void statusPublish();
+    void on_connect(int rc);
+    void runMqttLoop();
 
 public:
-    ManualControlAPI(VehicleController *vehicleController)
+    ManualControlAPI();
+
+    static ManualControlAPI *_instance;
+
+    static void initialize()
     {
-        this->vehicleController = vehicleController;
-        this->host = strdup(BROKER_HOST);
-        this->port = BROKER_PORT;
-        this->messageId = -1;
-        this->isConnected = false;
-        this->isRunning = false;
-        // this->username_pw_set(BROKER_USER, BROKER_PWD);
+        if (ManualControlAPI::_instance != nullptr)
+            delete ManualControlAPI::_instance;
+
+        ManualControlAPI::_instance = new ManualControlAPI();
     }
 
-    void initialize()
+    static ManualControlAPI *getInstance()
     {
-        connect_async(this->host, this->port, 60);
-        runMqttLoopThr = new std::thread(&ManualControlAPI::runMqttLoop, this);
-    }
+        return ManualControlAPI::_instance;
+    };
 
-    VehicleData *getVehicleData()
-    {
-        return vehicleController->getVehicleData();
-    }
+    VehicleData *getVehicleData();
 };

@@ -24,7 +24,6 @@ find_package_handle_standard_args(wiringPi DEFAULT_MSG WIRINGPI_LIBRARIES WIRING
 find_library(CONTROL_LIB REQUIRED
     NAMES crawler_control
     HINTS /usr/lib
-
 )
 include_directories(/usr/include/crawler)
 
@@ -38,6 +37,7 @@ add_executable(
     manual_ctrl_tst
     manual_control_api_test.cpp
     ../../control/vehicle_controller.cpp
+    ../../control/manual_control_api.cpp
 )
 
 add_executable(
@@ -48,4 +48,4 @@ add_executable(
 
 # link my-recognition to jetson-inference library
 target_link_libraries(manual_ctrl_tst PkgConfig::deps ${CONTROL_LIB} PkgConfig::Mosquitto  PkgConfig::Mosquittopp ${WIRINGPI_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(vehicle_control_tst PkgConfig::deps ${CONTROL_LIB} PkgConfig::Mosquitto  PkgConfig::Mosquittopp ${WIRINGPI_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(vehicle_control_tst PkgConfig::deps ${CONTROL_LIB}  ${WIRINGPI_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

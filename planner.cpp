@@ -20,11 +20,18 @@
 #include "control/vehicle_controller.h"
 #include "control/manual_control_api.h"
 
+#define CONTROL_DEVICE "/dev/ttyUSB0"
+
 NetworkStreamReader *reader;
 
 
 void onProcess(StreamData * frame) {
 
+}
+
+void controlInitialize() {
+    VehicleController::initialize(CONTROL_DEVICE);
+    ManualControlAPI::initialize();
 }
 
 int main(int argc, char *argv[])
@@ -43,12 +50,9 @@ int main(int argc, char *argv[])
         ->withBufferSize(1)
         ->withOnProcessCallback(onProcess);
 
-    VehicleController *vehicleController = new VehicleController();
+    controlInitialize();
 
-    ManualControlAPI *manualControlAPI = new ManualControlAPI(vehicleController);
-    manualControlAPI->initialize();
-
-    while (!reader->isConnected()) {
+     while (!reader->isConnected()) {
         if (firstConnect)
             printf ("Connecting to %s:%d -> %d...\n", argv[1], serverPort, localPort);
         else
@@ -59,9 +63,7 @@ int main(int argc, char *argv[])
         reader->requestConnectionToStreamServer();
         
         if (reader->isConnected())
-            reader->run();
-
-        
+            reader->run();       
     }
 
     return 0;

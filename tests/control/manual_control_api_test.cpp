@@ -70,14 +70,6 @@ void restoreTerminal(int oldFlags)
 #define DEVICE "/dev/ttyUSB0"
 //#define DEVICE "/dev/ttyACM0"
 
-ManualControlAPI *init_server()
-{
-    VehicleController *vehicleController = new VehicleController(DEVICE);
-
-    ManualControlAPI *manualControlAPI = new ManualControlAPI(vehicleController);
-    manualControlAPI->initialize();
-    return manualControlAPI;
-}
 
 class RemoteController : public mosqpp::mosquittopp
 {
@@ -112,7 +104,7 @@ public:
         char *p = (char *)malloc(sizeof(char) * 2);
         p[0] = CMD_INCREASE_SPEED;
         p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
+        publish(&message_id, "/crawler/cmd", 2, p);
     }
 
     void requestForwardDecrement()
@@ -121,7 +113,7 @@ public:
         char *p = (char *)malloc(sizeof(char) * 2);
         p[0] = CMD_DECREASE_SPEED;
         p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
+        publish(&message_id, "/crawler/cmd", 2, p);
     }
 
     void requestLeftIncrement()
@@ -130,7 +122,7 @@ public:
         char *p = (char *)malloc(sizeof(char) * 2);
         p[0] = CMD_INC_TURN_LEFT;
         p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
+        publish(&message_id, "/crawler/cmd", 2, p);
     }
 
     void requestRightIncrement()
@@ -139,7 +131,7 @@ public:
         char *p = (char *)malloc(sizeof(char) * 2);
         p[0] = CMD_INC_TURN_RIGHT;
         p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
+        publish(&message_id, "/crawler/cmd", 2, p);
     }
 
     void requestReset()
@@ -148,7 +140,7 @@ public:
         char *p = (char *)malloc(sizeof(char) * 2);
         p[0] = CMD_RST;
         p[1] = 0;
-        publish(&message_id, "/crawler/cmd", 2, p, 1);
+        publish(&message_id, "/crawler/cmd", 2, p);
     }
 
     void on_message(const struct mosquitto_message *message)
@@ -165,7 +157,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    ManualControlAPI *server = init_server();
+    VehicleController::initialize(DEVICE);
+
+    ManualControlAPI::initialize();
 
     // client for the MQTT messaging bus
 
@@ -178,7 +172,9 @@ int main(int argc, char *argv[])
 
     while (run)
     {
-        char ch = menu(server->getVehicleData());
+        char ch = menu(VehicleController::getInstance()->getVehicleData());
+
+        printf("a\n");
 
         switch (ch)
         {
