@@ -17,7 +17,8 @@
 #define CMD_DECREASE_SPEED '2'
 #define CMD_INC_TURN_RIGHT '3'
 #define CMD_INC_TURN_LEFT '4'
-#define CMD_RST '5'
+#define CMD_STOP '5'
+#define CMD_RST '6'
 
 // https://levelup.gitconnected.com/building-an-api-in-c-with-pistache-413247535fd3
 // https://github.com/pistacheio/pistache
@@ -32,7 +33,6 @@ private:
 
     unsigned int messageId;
     bool isConnected;
-    bool isRunning;
 
     int getNextMessageId();
     void on_message(const struct mosquitto_message *message);
@@ -46,12 +46,14 @@ public:
 
     static ManualControlAPI *_instance;
 
-    static void initialize()
+    static bool initialize()
     {
         if (ManualControlAPI::_instance != nullptr)
             delete ManualControlAPI::_instance;
 
         ManualControlAPI::_instance = new ManualControlAPI();
+
+        return true;
     }
 
     static ManualControlAPI *getInstance()
@@ -60,4 +62,11 @@ public:
     };
 
     VehicleData *getVehicleData();
+
+    bool isConnectedToMQTT() {
+        return isConnected;
+    }
+
+    static bool isAlive();
+
 };

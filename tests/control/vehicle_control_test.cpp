@@ -51,6 +51,7 @@ char menu(DriveSetting &settings, bool lastAck)
     printf("\n\n");
     printf("last command status: %s\n", ack.c_str());
     printf("\n\n");
+    printf("(r) reset\n");
     printf("(q) stop\n");
     printf("(Esc) to quit\n\n");
     return getchar();
@@ -90,7 +91,6 @@ int main(int argc, char **argv)
 
     auto flags = setupTerminal();
     VehicleController::initialize(DEVICE);
-    
 
     DriveSetting settings;
 
@@ -106,20 +106,23 @@ int main(int argc, char **argv)
         switch (ch)
         {
         case 'w':
-             lastAck = VehicleController::getInstance()->forwardIncrease(25);
+            lastAck = VehicleController::getInstance()->forwardIncrease(25);
             break;
         case 's':
-             lastAck = VehicleController::getInstance()->forwardIncrease(-25);
+            lastAck = VehicleController::getInstance()->forwardIncrease(-25);
             break;
         case 'a':
-             lastAck = VehicleController::getInstance()->increaseTurnLeftAngle(5);
+            lastAck = VehicleController::getInstance()->increaseTurnLeftAngle(5);
             break;
         case 'd':
-             lastAck = VehicleController::getInstance()->increaseTurnRightAngle(5);
+            lastAck = VehicleController::getInstance()->increaseTurnRightAngle(5);
             break;
         case 'q':
-             lastAck = VehicleController::getInstance()->stop();
+            lastAck = VehicleController::getInstance()->stop();
             break;
+        case 'r':
+            lastAck = VehicleController::getInstance()->reset();
+            continue;
         case 27:
             run = false;
             break;

@@ -43,6 +43,7 @@ char menu(VehicleData *data)
     }
 
     printf("\n\n");
+    printf("(r) reset\n");
     printf("(q) stop\n");
     printf("(Esc) to quit\n\n");
     return getchar();
@@ -134,6 +135,15 @@ public:
         publish(&message_id, "/crawler/cmd", 2, p);
     }
 
+    void requestStop()
+    {
+        int message_id = 1;
+        char *p = (char *)malloc(sizeof(char) * 2);
+        p[0] = CMD_STOP;
+        p[1] = 0;
+        publish(&message_id, "/crawler/cmd", 2, p);
+    }
+
     void requestReset()
     {
         int message_id = 1;
@@ -191,8 +201,10 @@ int main(int argc, char *argv[])
             controller.requestRightIncrement();
             break;
         case 'q':
-            controller.requestReset();
+            controller.requestStop();
             break;
+        case 'r':
+            controller.requestReset();
         case 27:
             run = false;
             break;

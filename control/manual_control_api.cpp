@@ -25,8 +25,11 @@ void ManualControlAPI::on_message(const struct mosquitto_message *message)
 
         switch (msg[0])
         {
-        case CMD_RST:
+        case CMD_STOP:
             VehicleController::getInstance()->stop();
+            break;
+        case CMD_RST:
+            VehicleController::getInstance()->reset();
             break;
         case CMD_INCREASE_SPEED:
             VehicleController::getInstance()->forwardIncrease(25);
@@ -91,14 +94,18 @@ ManualControlAPI::ManualControlAPI()
     this->port = BROKER_PORT;
     this->messageId = -1;
     this->isConnected = false;
-    this->isRunning = false;
     // this->username_pw_set(BROKER_USER, BROKER_PWD);
 
     connect_async(this->host, this->port, 60);
     runMqttLoopThr = new std::thread(&ManualControlAPI::runMqttLoop, this);
+
 }
 
 VehicleData *ManualControlAPI::getVehicleData()
 {
     return VehicleController::getInstance()->getVehicleData();
+}
+
+bool ManualControlAPI::isAlive() {
+    return ManualControlAPI::getInstance() != nullptr;
 }

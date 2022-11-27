@@ -24,14 +24,17 @@ public:
 
     static VehicleController *_instance;
 
-    static void initialize(const char *device)
+    static bool initialize(const char *device)
     {
-        CrawlerHAL::initialize(device);
+        if (!CrawlerHAL::initialize(device)) {
+            return false;
+        }
 
         if (VehicleController::_instance != nullptr)
             delete VehicleController::_instance;
 
         VehicleController::_instance = new VehicleController();
+        return true;
     }
 
     static VehicleController *getInstance()
@@ -43,10 +46,12 @@ public:
     bool forwardIncrease(int increaseValue);
     bool increaseTurnLeftAngle(uint8_t increaseValue);
     bool increaseTurnRightAngle(uint8_t increaseValue);
+    bool reset();
 
     VehicleData *getVehicleData();
 
     bool stop();
+    static bool isAlive();
 };
 
 #endif
