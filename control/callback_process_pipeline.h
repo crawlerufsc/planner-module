@@ -4,18 +4,16 @@
 #include <queue>
 #include <mutex>
 #include <thread>
+#include <frame.h>
 
-#include "../model/frame.h"
-
-template <typename T>
+template <typename FrameType>
 class CallbackProcessPipeline
 {
 private:
-    std::mutex *requestNewFrameMutex;
-    std::mutex *queueFrameProcess;
+    std::mutex *frameMutex;
     bool loop_run;
     bool frameRequestWaitForAnswer;
-    T *frame;
+    Frame<FrameType> *frame;
     void (*onProcess)(CallbackProcessPipeline<T> *, T *);
     std::thread *requestFrameThread;
     std::thread *processThread;
@@ -24,14 +22,16 @@ private:
     {
         while (this->loop_run)
         {
-            this->requestNewFrameMutex->lock();
-            if (!frameRequestWaitForAnswer)
+            if (frameRequestWaitForAnswer)
             {
-                frameRequestWaitForAnswer = true;
-                this->onRequestNextFrame();
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
             }
-            this->requestNewFrameMutex->unlock();
-            // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+            this->frameMutex->lock();
+            frameRequestWaitForAnswer = true;
+            this->onRequestNextFrame();
+            this->frameMutex->unlock();
         }
     }
 
@@ -40,26 +40,22 @@ private:
         if (this->onProcess == nullptr)
             return;
 
-
-        T *procFrame = nullptr;
-
         while (this->loop_run)
         {
-            this->queueFrameProcess->lock();
+            T *procFrame = nullptr;
 
+            this->frameMutex->lock();
             if (this->frame != nullptr)
             {
                 procFrame = this->frame;
                 this->frame = nullptr;
             }
-
-            this->queueFrameProcess->unlock();
+            this->frameMutex->unlock();
 
             if (procFrame != nullptr)
             {
                 this->onProcess(this, procFrame);
                 delete procFrame;
-                procFrame = nullptr;
             }
         }
     }
@@ -67,7 +63,14 @@ private:
     void replaceFrame(T *newFrame)
     {
         if (this->frame != nullptr)
+        {
+            printf("deleting addr: %p\n", this->frame);
             delete this->frame;
+        }
+        else
+        {
+            printf("nullptr frame\n");
+        }
 
         this->frame = newFrame;
     }
@@ -77,25 +80,19 @@ protected:
     virtual void onRequestNextFrame() = 0;
     virtual void onTerminate() = 0;
 
-    virtual bool isConnected()
-    {
-        return loop_run;
-    }
-
 public:
     CallbackProcessPipeline()
     {
-        this->requestNewFrameMutex = new std::mutex();
-        this->queueFrameProcess = new std::mutex();
+        this->frameMutex = new std::mutex();
 
         loop_run = false;
         frameRequestWaitForAnswer = false;
-        frame = NULL;
+        frame = new Frame<FrameType>();
     }
     ~CallbackProcessPipeline()
     {
-        delete this->requestNewFrameMutex;
-        delete this->queueFrameProcess;
+        delete this->frameMutex;
+        delete frame;
 
         if (this->requestFrameThread != nullptr)
             delete this->requestFrameThread;
@@ -103,14 +100,16 @@ public:
         if (this->processThread != nullptr)
             delete this->processThread;
     }
-
-    void reportNewFrameReceived(T *frame)
+    virtual bool isRunning()
     {
-        printf("reportNewFrameReceived()\n");
-        this->requestNewFrameMutex->lock();
+        return loop_run;
+    }
+
+    void reportNewFrameReceived()
+    {
+        this->frameMutex->lock();       
         frameRequestWaitForAnswer = false;
-        replaceFrame(frame);
-        this->requestNewFrameMutex->unlock();
+        this->frameMutex->unlock();
     }
 
     CallbackProcessPipeline<T> *withOnProcessCallback(void (*onProcess)(CallbackProcessPipeline<T> *, T *))

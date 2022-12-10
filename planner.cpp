@@ -16,36 +16,38 @@
 #include <stdio.h>
 #include <queue>
 #include <mutex>
-#include "communication/network_stream_reader.h"
+#include <network_stream_reader.h>
+#include "communication/webrtc_api_stream.h"
 #include "control/vehicle_controller.h"
-#include "control/manual_control_api.h"
+#include "control/master_control_api.h"
 #include "utils/file_utils.h"
 
 #define CONTROL_DEVICE "/dev/ttyUSB0"
-#define VISION_MODULE_IP "10.0.0.60"
-#define VISION_MODULE_OG_REMOTE_PORT 20000
-#define VISION_MODULE_OG_LOCAL_PORT 20000
-
+#define MqttHost "10.42.0.1"
+#define MqttPort 1883
+#define OG_STREAM_LOCAL_IP "10.42.1.1"
+#define OG_STREAM_LOCAL_Port 20003
 
 void onProcess(StreamData *frame)
 {
+    printf("new frame: size: %d, format: %d x %d\n", frame->len, frame->width, frame->height);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
-
 
 class CrawlerDevices
 {
 public:
     bool apiInitialized;
-    NetworkStreamReader * reader; 
+    NetworkStreamReader *occupancyGridReader;
 
-    CrawlerDevices(NetworkStreamReader * reader)
+    CrawlerDevices(NetworkStreamReader *occupancyGridReader)
     {
-        this->reader = reader;
+        this->occupancyGridReader = occupancyGridReader;
     }
 
     bool tryInitializeDevices()
     {
-        int initDevices = 3;
+        int initDevices = 4;
         if (!VehicleController::isAlive())
         {
             if (VehicleController::initialize(CONTROL_DEVICE))
@@ -55,34 +57,35 @@ public:
         }
         if (VehicleController::isAlive() && !ManualControlAPI::isAlive())
         {
-            if (ManualControlAPI::initialize());
+            if (ManualControlAPI::initialize(MqttHost, MqttPort))
                 printf("WebAPI initialized\n");
         }
-        if (!reader->isConnected())
+        if (!occupancyGridReader->isConnected())
         {
-            reader->requestConnectionToStreamServer();
-
-            if (reader->isConnected())
-            {
-                printf("Connected to the vision module on %s:%d.\n", VISION_MODULE_IP, VISION_MODULE_OG_REMOTE_PORT);
-                reader->run(false);
-            }
+            occupancyGridReader->connect();
+            initDevices--;
+        }
+        if (!WebRTCApiStream::isAlive())
+        {
+            if (WebRTCApiStream::initialize(MqttHost, MqttPort, OG_STREAM_LOCAL_IP))
+                printf("WebRTC initialized\n");
             else
                 initDevices--;
         }
-
-        return initDevices == 3;
+        return initDevices == 4;
     }
 
-    void printInitializeStatus() {
-        printf ("Hardware Status:\n");
-        printf ("[Vision Module]:\t%s\n", reader->isConnected() ?  "ok" : "?");
-        printf ("[Crawler HAL]:\t%s\n", VehicleController::isAlive() ?  "ok" : "?");
-        printf ("[MQTT manual control]:\t%s\n", ManualControlAPI::isAlive() ?  "ok" : "?");
+    void printInitializeStatus()
+    {
+        printf("Hardware Status:\n");
+        printf("[Vision Module]:\t%s\n", occupancyGridReader->isConnected() ? "ok" : "?");
+        printf("[Crawler HAL]:\t%s\n", VehicleController::isAlive() ? "ok" : "?");
+        printf("[MQTT master control]:\t%s\n", ManualControlAPI::isAlive() ? "ok" : "?");
+        printf("[WebRTC streaming]:\t%s\n", WebRTCApiStream::isAlive() ? "ok" : "?");
     }
 };
 
-NetworkStreamReader * reader;
+NetworkStreamReader *occupancyGridReader;
 
 int main(int argc, char *argv[])
 {
@@ -91,23 +94,29 @@ int main(int argc, char *argv[])
     int serverPort = atoi(argv[2]);
     int localPort = atoi(argv[3]);
 
-    reader = (new NetworkStreamReader(VISION_MODULE_IP, VISION_MODULE_OG_REMOTE_PORT, VISION_MODULE_OG_LOCAL_PORT))
-                 ->withBufferSize(1)
-                 ->withOnProcessCallback(onProcess);
+    occupancyGridReader = (new NetworkStreamReader(MqttHost, MqttPort, OG_STREAM_LOCAL_IP, OG_STREAM_LOCAL_Port))
+                ->withStreamRequestUri("/vision-module/cmd/og")
+                ->withBufferSize(1)
+                ->withOnProcessCallback(onProcess)
+                ->async();
 
-    CrawlerDevices devices(reader);
+    CrawlerDevices devices(occupancyGridReader);
 
     while (true)
     {
-        if (!devices.tryInitializeDevices()) {
+        if (!devices.tryInitializeDevices())
+        {
             devices.printInitializeStatus();
             lastCheckModulesUp = false;
-        } else {
-            if (!lastCheckModulesUp) {
-                printf ("All modules are up and running now\n");
+        }
+        else
+        {
+            if (!lastCheckModulesUp)
+            {
+                printf("All modules are up and running now\n");
             }
             lastCheckModulesUp = true;
-        }     
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }

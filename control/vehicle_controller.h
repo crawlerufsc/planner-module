@@ -26,7 +26,8 @@ public:
 
     static bool initialize(const char *device)
     {
-        if (!CrawlerHAL::initialize(device)) {
+        if (!CrawlerHAL::initialize(device))
+        {
             return false;
         }
 
@@ -47,6 +48,9 @@ public:
     bool increaseTurnLeftAngle(uint8_t increaseValue);
     bool increaseTurnRightAngle(uint8_t increaseValue);
     bool reset();
+    bool setSpeedForward(u_char value);
+    bool setSpeedBackward(u_char value);
+    bool setSteeringAngle(int angle);
 
     VehicleData *getVehicleData();
 

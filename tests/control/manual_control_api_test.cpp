@@ -178,13 +178,9 @@ int main(int argc, char *argv[])
 
     auto flags = setupTerminal();
 
-    printf ("initialized\n");
-
     while (run)
     {
         char ch = menu(VehicleController::getInstance()->getVehicleData());
-
-        printf("a\n");
 
         switch (ch)
         {

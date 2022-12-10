@@ -99,7 +99,8 @@ bool VehicleController::stop()
     return CrawlerHAL::getInstance()->setEngineStop();
 }
 
-bool VehicleController::reset() {
+bool VehicleController::reset()
+{
     if (status != nullptr)
     {
         status->forwardPower = 0;
@@ -108,10 +109,32 @@ bool VehicleController::reset() {
     return CrawlerHAL::getInstance()->reset();
 }
 
-bool VehicleController::isAlive() {
+bool VehicleController::isAlive()
+{
     CrawlerHAL *hal = CrawlerHAL::getInstance();
-    if (hal == nullptr) return false;
+    if (hal == nullptr)
+        return false;
 
     return hal->deviceExists();
 }
 
+bool VehicleController::setSpeedForward(u_char value)
+{
+    if (value == 0)
+        return CrawlerHAL::getInstance()->setEngineStop();
+
+    return CrawlerHAL::getInstance()->setEngineForward(value);
+}
+
+bool VehicleController::setSpeedBackward(u_char value)
+{
+    if (value == 0)
+        return CrawlerHAL::getInstance()->setEngineStop();
+
+    return CrawlerHAL::getInstance()->setEngineBackward(value);
+}
+
+bool VehicleController::setSteeringAngle(int angle)
+{
+    return CrawlerHAL::getInstance()->setSteeringAngle(angle);
+}

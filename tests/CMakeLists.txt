@@ -22,29 +22,40 @@ include_directories(${GTEST_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(/usr/include/gstreamer-1.0)
 
+# framework lib
+find_library(FRAMEWORK_LIB REQUIRED
+    NAMES crawler_fw
+    HINTS /usr/lib
+)
+include_directories(/usr/include/crawler)
 
 SET(TARGET_H
-  ../control/callback_process_pipeline.h
-  ../control/direct_process_pipeline.h
-  ../communication/dataset_stream_reader.h
-  ../utils/debug_utils.h
-  ../../utils/data_convert.h
-  ../../model/frame.h
-  ../../model/planning_waypoint.h
-  ../../planning/ompl_skeletonize.h
+  ../communication/gstream_client.h
+  # ../control/callback_process_pipeline.h
+  # ../control/direct_process_pipeline.h
+  # ../communication/dataset_stream_reader.h
+  # ../utils/debug_utils.h
+  # ../../utils/data_convert.h
+  # ../../model/frame.h
+  # ../../model/planning_waypoint.h
+  # ../../planning/ompl_skeletonize.h
 
 )
+
+
 
 add_executable(
   unittest
   planner_tests.cpp
-  control/callback_process_pipeline_test.cpp   
-  communication/test_dataset_stream_reader.cpp
-  ../communication/dataset_stream_reader.cpp
-  utils/data_convert_test.cpp
-  model/frame_test.cpp
-  model/planning_waypoint_test.cpp
-  planning/ompl/ompl_skeletonize_test.cpp
+  communication/test_gstream_client.cpp
+  ../communication/gstream_client.cpp
+  # control/callback_process_pipeline_test.cpp   
+  # communication/test_dataset_stream_reader.cpp
+  # ../communication/dataset_stream_reader.cpp
+  # utils/data_convert_test.cpp
+  # model/frame_test.cpp
+  # model/planning_waypoint_test.cpp
+  # planning/ompl/ompl_skeletonize_test.cpp
 )
 
 if(THREADS_HAVE_PTHREAD_ARG)
@@ -55,4 +66,10 @@ if(CMAKE_THREAD_LIBS_INIT)
 endif()
 
 # link my-recognition to jetson-inference library
-target_link_libraries(unittest PkgConfig::deps ${GTEST_LIBRARIES} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(unittest PkgConfig::deps 
+  ${GTEST_LIBRARIES} 
+  ${GST_APP_LIBRARIES} 
+  ${GST_VIDEO_LIBRARIES} 
+  ${OpenCV_LIBS}
+  ${CONTROL_LIB}
+)
