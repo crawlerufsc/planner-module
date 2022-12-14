@@ -1,11 +1,57 @@
 #include "master_control_api.h"
+#include <file_utils.h>
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
-ManualControlAPI *ManualControlAPI::_instance = nullptr;
+MasterControlAPI *MasterControlAPI::_instance = nullptr;
 
-void ManualControlAPI::onReceived(std::string topic, std::string payload)
+void MasterControlAPI::onReceived(std::string topic, std::string payload)
+{
+    if (topic == CAR_CMD_TOPIC)
+        manualCommandProcess(payload);
+    else if (topic == ORIGINAL_STREAM_LOGGING_CMD_TOPIC)
+        originalStreamLogCommandProcess(payload);
+}
+
+// const char *getLogFileName(int i = 0)
+// {
+//     std::stringstream *ss = new std::stringstream();
+//     (*ss) << "vision_log_" << i << ".mkv";
+//     if (FileUtils::fileExists(ss->str()))
+//         return getLogFileName(i + 1);
+//     return ss->str().c_str();
+// }
+
+void MasterControlAPI::originalStreamLogCommandProcess(std::string payload)
+{
+    if (payload == "start")
+    {
+        if (this->originalStreamLogger != nullptr)
+            delete this->originalStreamLogger;
+
+        //const char *file = getLogFileName();
+        this->originalStreamLogger = (new NetworkStreamLogger("/home/cristiano/original_vision_output.mkv", pubSubHost, pubSubPort, localIP, 21001))
+            ->withStreamRequestUri("/vision-module/cmd/original");
+
+        this->originalStreamLogger->requestStreamStart();
+
+        printf ("Start logging original image to file: ~/original_vision_output.mkv\n");
+
+    } else {
+        if (this->originalStreamLogger != nullptr) {
+            printf ("Stop logging original image\n");
+            this->originalStreamLogger->requestStreamStop();
+            delete this->originalStreamLogger;
+            this->originalStreamLogger = nullptr;
+        } else {
+            printf ("Requested to stop logging but we're not logging anything\n");
+        }       
+    }
+}
+
+void MasterControlAPI::manualCommandProcess(std::string payload)
 {
     switch (payload[0])
     {
@@ -48,8 +94,7 @@ void ManualControlAPI::onReceived(std::string topic, std::string payload)
     }
 }
 
-
-void ManualControlAPI::statusPublish()
+void MasterControlAPI::statusPublish()
 {
     while (isConnected())
     {
@@ -60,9 +105,13 @@ void ManualControlAPI::statusPublish()
     }
 }
 
-ManualControlAPI::ManualControlAPI(const char *pubSubHost, int pubSubPort) : PubSubClient(pubSubHost,pubSubPort, CAR_CMD_TOPIC)
+MasterControlAPI::MasterControlAPI(const char *pubSubHost, int pubSubPort, const char *localIP) : PubSubClient(pubSubHost, pubSubPort, CAR_CMD_TOPIC)
 {
     // this->username_pw_set(BROKER_USER, BROKER_PWD);
+    this->originalStreamLogger = nullptr;
+    this->pubSubHost = pubSubHost;
+    this->pubSubPort = pubSubPort;
+    this->localIP = localIP;
 
     original = new WebRTCService<u_char>();
     std::string sdp = original->getSdpService();
@@ -73,16 +122,26 @@ ManualControlAPI::ManualControlAPI(const char *pubSubHost, int pubSubPort) : Pub
     outp.close();
 }
 
-VehicleData *ManualControlAPI::getVehicleData()
+bool MasterControlAPI::instanceInit()
+{
+    if (!blockUntilConnected(2000))
+        return false;
+
+    subscribeTo(ORIGINAL_STREAM_CMD_TOPIC);
+    subscribeTo(ORIGINAL_STREAM_LOGGING_CMD_TOPIC);
+    return true;
+}
+
+VehicleData *MasterControlAPI::getVehicleData()
 {
     return VehicleController::getInstance()->getVehicleData();
 }
 
-bool ManualControlAPI::isAlive()
+bool MasterControlAPI::isAlive()
 {
-    return ManualControlAPI::getInstance() != nullptr;
+    return MasterControlAPI::getInstance() != nullptr;
 }
 
-void ManualControlAPI::onStop() {
-
+void MasterControlAPI::onStop()
+{
 }

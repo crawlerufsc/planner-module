@@ -30,7 +30,7 @@
 
 void onProcess(StreamData *frame)
 {
-    printf("new frame: size: %d, format: %d x %d\n", frame->len, frame->width, frame->height);
+    //printf("new frame: size: %d, format: %d x %d\n", frame->len, frame->width, frame->height);
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 
@@ -55,23 +55,23 @@ public:
             else
                 initDevices--;
         }
-        if (VehicleController::isAlive() && !ManualControlAPI::isAlive())
+        if (VehicleController::isAlive() && !MasterControlAPI::isAlive())
         {
-            if (ManualControlAPI::initialize(MqttHost, MqttPort))
-                printf("WebAPI initialized\n");
+            if (MasterControlAPI::initialize(MqttHost, MqttPort, OG_STREAM_LOCAL_IP))
+                printf("MasterControl API initialized\n");
         }
         if (!occupancyGridReader->isConnected())
         {
             occupancyGridReader->connect();
             initDevices--;
         }
-        if (!WebRTCApiStream::isAlive())
-        {
-            if (WebRTCApiStream::initialize(MqttHost, MqttPort, OG_STREAM_LOCAL_IP))
-                printf("WebRTC initialized\n");
-            else
-                initDevices--;
-        }
+        // if (!WebRTCApiStream::isAlive())
+        // {
+        //     if (WebRTCApiStream::initialize(MqttHost, MqttPort, OG_STREAM_LOCAL_IP))
+        //         printf("WebRTC initialized\n");
+        //     else
+        //         initDevices--;
+        // }
         return initDevices == 4;
     }
 
@@ -80,12 +80,13 @@ public:
         printf("Hardware Status:\n");
         printf("[Vision Module]:\t%s\n", occupancyGridReader->isConnected() ? "ok" : "?");
         printf("[Crawler HAL]:\t%s\n", VehicleController::isAlive() ? "ok" : "?");
-        printf("[MQTT master control]:\t%s\n", ManualControlAPI::isAlive() ? "ok" : "?");
-        printf("[WebRTC streaming]:\t%s\n", WebRTCApiStream::isAlive() ? "ok" : "?");
+        printf("[Master control API]:\t%s\n", MasterControlAPI::isAlive() ? "ok" : "?");
+        //printf("[WebRTC streaming]:\t%s\n", WebRTCApiStream::isAlive() ? "ok" : "?");
     }
 };
 
 NetworkStreamReader *occupancyGridReader;
+
 
 int main(int argc, char *argv[])
 {

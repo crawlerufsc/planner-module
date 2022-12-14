@@ -3,7 +3,8 @@
 
 #include <pubsub_client.h>
 #include <vector>
-#include <webrtc.h>
+#include "webrtc.h"
+#include <network_stream_reader.h>
 
 #define WEBRTC_API_CLIENT_SDP_ORIGINAL_TOPIC "/stream/original/client-sdp"
 #define WEBRTC_API_CLIENT_SDP_SEGMENTED_TOPIC "/stream/segmented/client-sdp"
@@ -27,6 +28,8 @@ public:
 class WebRTCApiStream : public PubSubClient
 {
 private:
+    NetworkStreamReader *originalStreamReader;
+    NetworkStreamReader *segmentedStreamReader;
     std::vector<WebRTCApiStreamConnection *> *connections;
     int pubSubPort;
     const char *localIP;

@@ -52,8 +52,8 @@ SET(TARGET_H
     control/execution_controller.h
     control/vehicle_controller.h
     control/master_control_api.h
-    communication/webrtc.h
-    communication/webrtc_api_stream.h
+    #communication/webrtc.h
+    #communication/webrtc_api_stream.h
     utils/image_utils.h
     model/planning_waypoint.h
 )
@@ -61,7 +61,7 @@ SET(TARGET_H
 add_executable(
     planner-bin 
     planner.cpp 
-    communication/webrtc_api_stream.cpp
+    #communication/webrtc_api_stream.cpp
     control/execution_controller.cpp
     control/master_control_api.cpp
     control/vehicle_controller.cpp

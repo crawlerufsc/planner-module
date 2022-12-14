@@ -111,3 +111,15 @@ def segmentedVisionServiceSdp():
         with open('/tmp/crawler_sdp_segmented.dat') as f:
             resp['sdp'] = f.read()
         return dumps(resp)
+
+@app.route("/logging/vision/original/start", methods = ['GET'])
+def originalVisionLogToFileStart():
+    client = setup()
+    client.publish(topic="/stream/original/log", payload=str("start"), retain=False)
+    return "{ 'result': 'true' }"
+
+@app.route("/logging/vision/original/stop", methods = ['GET'])
+def originalVisionLogToFileStop():
+    client = setup()
+    client.publish(topic="/stream/original/log", payload=str("stop"), retain=False)
+    return "{ 'result': 'true' }"

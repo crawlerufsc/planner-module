@@ -19,22 +19,26 @@ void WebRTCApiStream::onStop()
 
 void WebRTCApiStream::requestOriginalStream(std::string spi)
 {
-    WebRTCApiStreamConnection *conn = new WebRTCApiStreamConnection(17720);
-    conn->service->startServing(this->localIP, 17720);
-    conn->service->serveStreamTo(spi);
-    this->connections->push_back(conn);
-    requestStream("/vision-module/cmd/original", 17720);
+    if (this->originalStreamReader != nullptr) {
+        delete this->originalStreamReader;
+    }
+    this->originalStreamReader = requestStream("/vision-module/cmd/original", 17720);
+}
+
+void NetworkStreamReader::onProcessOriginalStream(StreamData *frame) {
+    printf ("got new original frame: %ld size\n", frame->len);
 }
 
 
-void WebRTCApiStream::requestStream(const char *topic, int port)
+NetworkStreamReader * WebRTCApiStream::requestStream(const char *topic, int port)
 {
-    json req{
-        {"ip", localIP},
-        {"port", port},
-        {"enable", true}};
-
-    publishTo(topic, req.dump());
+    NetworkStreamReader *reader = (new NetworkStreamReader(pubSubHost, pubSubPort, localIP, port))
+                    ->withBufferSize(1)
+                    ->withStreamRequestUri(topic)
+                    ->withOnProcessCallback(NetworkStreamReader::onProcessOriginalStream, this);
+                    
+    reader->connect();
+    return reader;   
 }
 
 bool WebRTCApiStream::isAlive()
