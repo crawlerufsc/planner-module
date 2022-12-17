@@ -4,15 +4,30 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <resource_manager.h>
+#include "../model/global_definitions.h"
 
 MasterControlAPI *MasterControlAPI::_instance = nullptr;
 
 void MasterControlAPI::onReceived(std::string topic, std::string payload)
 {
-    if (topic == CAR_CMD_TOPIC)
+    if (topic == PUBSUB_API_MANUAL_COMMAND_URI) {
         manualCommandProcess(payload);
-    else if (topic == ORIGINAL_STREAM_LOGGING_CMD_TOPIC)
+        return;
+    }
+    if (topic == PUBSUB_API_ORIGINAL_STREAM_LOGGING_REQUEST_URI) {
         originalStreamLogCommandProcess(payload);
+        return;
+    }
+    if (topic == PUBSUB_API_SEGMENTED_STREAM_LOGGING_REQUEST_URI) {
+        segmentedStreamLogCommandProcess(payload);
+        return;
+    }
+    if (topic == PUBSUB_API_OCCUPANCYGRID_STREAM_LOGGING_REQUEST_URI) {
+        occupancyGridStreamLogCommandProcess(payload);
+        return;
+    }
+
 }
 
 // const char *getLogFileName(int i = 0)
@@ -24,31 +39,42 @@ void MasterControlAPI::onReceived(std::string topic, std::string payload)
 //     return ss->str().c_str();
 // }
 
-void MasterControlAPI::originalStreamLogCommandProcess(std::string payload)
+void MasterControlAPI::streamLogCommandProcess(std::string streamResourceName, std::string payload)
 {
     if (payload == "start")
     {
-        if (this->originalStreamLogger != nullptr)
-            delete this->originalStreamLogger;
-
-        //const char *file = getLogFileName();
-        this->originalStreamLogger = (new NetworkStreamLogger("/home/cristiano/original_vision_output.mkv", pubSubHost, pubSubPort, localIP, 21001))
-            ->withStreamRequestUri("/vision-module/cmd/original");
-
-        this->originalStreamLogger->requestStreamStart();
-
-        printf ("Start logging original image to file: ~/original_vision_output.mkv\n");
-
-    } else {
-        if (this->originalStreamLogger != nullptr) {
-            printf ("Stop logging original image\n");
-            this->originalStreamLogger->requestStreamStop();
-            delete this->originalStreamLogger;
-            this->originalStreamLogger = nullptr;
-        } else {
-            printf ("Requested to stop logging but we're not logging anything\n");
-        }       
+        ResourceManager::removeSingletonResource<NetworkStreamLogger>(streamResourceName);
+        NetworkStreamLogger *logger = ResourceManager::getSingletonResource<NetworkStreamLogger>(streamResourceName);
+        logger->requestStreamStart();
+        printf("Start logging original image to file: ~/original_vision_output.mkv\n");
     }
+    else
+    {
+        NetworkStreamLogger *logger = ResourceManager::getSingletonResource<NetworkStreamLogger>(streamResourceName);
+
+        if (logger != nullptr)
+        {
+            printf("Stop logging original image\n");
+            logger->requestStreamStop();
+            ResourceManager::removeSingletonResource<NetworkStreamLogger>(streamResourceName);
+        }
+        else
+        {
+            printf("Requested to stop logging but we're not logging anything\n");
+        }
+    }
+}
+void MasterControlAPI::originalStreamLogCommandProcess(std::string payload)
+{
+    streamLogCommandProcess(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL, payload);
+}
+void MasterControlAPI::segmentedStreamLogCommandProcess(std::string payload)
+{
+    streamLogCommandProcess(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED, payload);
+}
+void MasterControlAPI::occupancyGridStreamLogCommandProcess(std::string payload)
+{
+    streamLogCommandProcess(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID, payload);
 }
 
 void MasterControlAPI::manualCommandProcess(std::string payload)
@@ -101,14 +127,13 @@ void MasterControlAPI::statusPublish()
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         VehicleData *data = VehicleController::getInstance()->getVehicleData();
         const char *payload = data->toJson();
-        publishTo(CAR_STATUS_TOPIC, std::string(payload));
+        publishTo(PUBSUB_API_SENSOR_STATUS_URI, std::string(payload));
     }
 }
 
-MasterControlAPI::MasterControlAPI(const char *pubSubHost, int pubSubPort, const char *localIP) : PubSubClient(pubSubHost, pubSubPort, CAR_CMD_TOPIC)
+MasterControlAPI::MasterControlAPI(const char *pubSubHost, int pubSubPort, const char *localIP) : PubSubClient(pubSubHost, pubSubPort, PUBSUB_API_MANUAL_COMMAND_URI)
 {
     // this->username_pw_set(BROKER_USER, BROKER_PWD);
-    this->originalStreamLogger = nullptr;
     this->pubSubHost = pubSubHost;
     this->pubSubPort = pubSubPort;
     this->localIP = localIP;
@@ -127,8 +152,9 @@ bool MasterControlAPI::instanceInit()
     if (!blockUntilConnected(2000))
         return false;
 
-    subscribeTo(ORIGINAL_STREAM_CMD_TOPIC);
-    subscribeTo(ORIGINAL_STREAM_LOGGING_CMD_TOPIC);
+    subscribeTo(PUBSUB_API_ORIGINAL_STREAM_LOGGING_REQUEST_URI);
+    subscribeTo(PUBSUB_API_SEGMENTED_STREAM_LOGGING_REQUEST_URI);
+    subscribeTo(PUBSUB_API_OCCUPANCYGRID_STREAM_LOGGING_REQUEST_URI);
     return true;
 }
 

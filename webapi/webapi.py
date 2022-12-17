@@ -112,14 +112,38 @@ def segmentedVisionServiceSdp():
             resp['sdp'] = f.read()
         return dumps(resp)
 
-@app.route("/logging/vision/original/start", methods = ['GET'])
+@app.route("/logging/vision/original", methods = ['GET'])
 def originalVisionLogToFileStart():
     client = setup()
     client.publish(topic="/stream/original/log", payload=str("start"), retain=False)
     return "{ 'result': 'true' }"
 
-@app.route("/logging/vision/original/stop", methods = ['GET'])
+@app.route("/logging/vision/original", methods = ['DEL', 'DELETE'])
 def originalVisionLogToFileStop():
     client = setup()
     client.publish(topic="/stream/original/log", payload=str("stop"), retain=False)
     return "{ 'result': 'true' }"
+
+@app.route("/logging/vision/segmented", methods = ['GET'])
+def segmentedVisionLogToFileStart():
+    client = setup()
+    client.publish(topic="/stream/segmented/log", payload=str("start"), retain=False)
+    return "{ 'result': 'true' }"
+
+@app.route("/logging/vision/segmented", methods = ['DEL', 'DELETE'])
+def segmentedVisionLogToFileStop():
+    client = setup()
+    client.publish(topic="/stream/segmented/log", payload=str("stop"), retain=False)
+    return "{ 'result': 'true' }"
+
+@app.route("/logging/vision/og", methods = ['GET'])
+def ogVisionLogToFileStart():
+    client = setup()
+    client.publish(topic="/stream/og/log", payload=str("start"), retain=False)
+    return "{ 'result': 'true' }"
+
+@app.route("/logging/vision/og", methods = ['DEL', 'DELETE'])
+def oglVisionLogToFileStop():
+    client = setup()
+    client.publish(topic="/stream/og/log", payload=str("stop"), retain=False)
+    return "{ 'result': 'true' }"    

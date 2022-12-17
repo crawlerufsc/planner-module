@@ -52,10 +52,12 @@ SET(TARGET_H
     control/execution_controller.h
     control/vehicle_controller.h
     control/master_control_api.h
+    control/hardware_keepalive.h
     #communication/webrtc.h
     #communication/webrtc_api_stream.h
     utils/image_utils.h
     model/planning_waypoint.h
+    model/global_definitions.h
 )
 
 add_executable(
@@ -65,6 +67,7 @@ add_executable(
     control/execution_controller.cpp
     control/master_control_api.cpp
     control/vehicle_controller.cpp
+    control/hardware_keepalive.cpp
 )
 
 target_link_libraries(planner-bin PkgConfig::deps 

@@ -7,10 +7,6 @@
 #include "../communication/webrtc.h"
 #include <network_stream_logger.h>
 
-#define CAR_STATUS_TOPIC "/crawler/status"
-#define CAR_CMD_TOPIC "/crawler/cmd"
-#define ORIGINAL_STREAM_CMD_TOPIC "/vision-module/cmd"
-#define ORIGINAL_STREAM_LOGGING_CMD_TOPIC "/stream/original/log"
 
 #define CMD_INCREASE_SPEED '1'
 #define CMD_DECREASE_SPEED '2'
@@ -35,7 +31,6 @@ private:
     WebRTCService<u_char> *original;
     WebRTCService<u_char> *segmented;
     WebRTCService<u_char> *occupancyGrid;
-    NetworkStreamLogger *originalStreamLogger;
 
     const char *pubSubHost;
     int pubSubPort;
@@ -44,7 +39,10 @@ private:
     void statusPublish();
 
     void manualCommandProcess(std::string payload);
+    void streamLogCommandProcess(std::string streamResourceName, std::string payload);
     void originalStreamLogCommandProcess(std::string payload);
+    void segmentedStreamLogCommandProcess(std::string payload);
+    void occupancyGridStreamLogCommandProcess(std::string payload);
 
 protected:
     void onReceived(std::string topic, std::string payload) override;
