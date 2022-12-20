@@ -112,38 +112,23 @@ def segmentedVisionServiceSdp():
             resp['sdp'] = f.read()
         return dumps(resp)
 
-@app.route("/logging/vision/original", methods = ['GET'])
-def originalVisionLogToFileStart():
+@app.route("/logging/vision/<type>", methods = ['POST', 'DEL', 'DELETE'])
+def visionStreamLogging(type):
     client = setup()
-    client.publish(topic="/stream/original/log", payload=str("start"), retain=False)
-    return "{ 'result': 'true' }"
-
-@app.route("/logging/vision/original", methods = ['DEL', 'DELETE'])
-def originalVisionLogToFileStop():
-    client = setup()
-    client.publish(topic="/stream/original/log", payload=str("stop"), retain=False)
-    return "{ 'result': 'true' }"
-
-@app.route("/logging/vision/segmented", methods = ['GET'])
-def segmentedVisionLogToFileStart():
-    client = setup()
-    client.publish(topic="/stream/segmented/log", payload=str("start"), retain=False)
-    return "{ 'result': 'true' }"
-
-@app.route("/logging/vision/segmented", methods = ['DEL', 'DELETE'])
-def segmentedVisionLogToFileStop():
-    client = setup()
-    client.publish(topic="/stream/segmented/log", payload=str("stop"), retain=False)
-    return "{ 'result': 'true' }"
-
-@app.route("/logging/vision/og", methods = ['GET'])
-def ogVisionLogToFileStart():
-    client = setup()
-    client.publish(topic="/stream/og/log", payload=str("start"), retain=False)
-    return "{ 'result': 'true' }"
-
-@app.route("/logging/vision/og", methods = ['DEL', 'DELETE'])
-def oglVisionLogToFileStop():
-    client = setup()
-    client.publish(topic="/stream/og/log", payload=str("stop"), retain=False)
+    if (request.method == 'POST'):
+        client.publish(topic="/stream/log/" + type, payload=str("start"), retain=False)
+    elif (request.method == 'DEL' or request.method == 'DELETE'):
+        client.publish(topic="/stream/log/" + type, payload=str("stop"), retain=False)
     return "{ 'result': 'true' }"    
+
+
+@app.route("/logging/sensors", methods = ['POST', 'DEL', 'DELETE'])
+def sensorsLogging():
+    client = setup()
+    if (request.method == 'POST'):
+        client.publish(topic="/sensors/log", payload=str("start"), retain=False)
+    elif (request.method == 'DEL' or request.method == 'DELETE'):
+        client.publish(topic="/sensors/log", payload=str("stop"), retain=False)
+    return "{ 'result': 'true' }"
+
+

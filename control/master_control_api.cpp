@@ -11,74 +11,6 @@ MasterControlAPI *MasterControlAPI::_instance = nullptr;
 
 void MasterControlAPI::onReceived(std::string topic, std::string payload)
 {
-    if (topic == PUBSUB_API_MANUAL_COMMAND_URI) {
-        manualCommandProcess(payload);
-        return;
-    }
-    if (topic == PUBSUB_API_ORIGINAL_STREAM_LOGGING_REQUEST_URI) {
-        originalStreamLogCommandProcess(payload);
-        return;
-    }
-    if (topic == PUBSUB_API_SEGMENTED_STREAM_LOGGING_REQUEST_URI) {
-        segmentedStreamLogCommandProcess(payload);
-        return;
-    }
-    if (topic == PUBSUB_API_OCCUPANCYGRID_STREAM_LOGGING_REQUEST_URI) {
-        occupancyGridStreamLogCommandProcess(payload);
-        return;
-    }
-
-}
-
-// const char *getLogFileName(int i = 0)
-// {
-//     std::stringstream *ss = new std::stringstream();
-//     (*ss) << "vision_log_" << i << ".mkv";
-//     if (FileUtils::fileExists(ss->str()))
-//         return getLogFileName(i + 1);
-//     return ss->str().c_str();
-// }
-
-void MasterControlAPI::streamLogCommandProcess(std::string streamResourceName, std::string payload)
-{
-    if (payload == "start")
-    {
-        ResourceManager::removeSingletonResource<NetworkStreamLogger>(streamResourceName);
-        NetworkStreamLogger *logger = ResourceManager::getSingletonResource<NetworkStreamLogger>(streamResourceName);
-        logger->requestStreamStart();
-        printf("Start logging original image to file: ~/original_vision_output.mkv\n");
-    }
-    else
-    {
-        NetworkStreamLogger *logger = ResourceManager::getSingletonResource<NetworkStreamLogger>(streamResourceName);
-
-        if (logger != nullptr)
-        {
-            printf("Stop logging original image\n");
-            logger->requestStreamStop();
-            ResourceManager::removeSingletonResource<NetworkStreamLogger>(streamResourceName);
-        }
-        else
-        {
-            printf("Requested to stop logging but we're not logging anything\n");
-        }
-    }
-}
-void MasterControlAPI::originalStreamLogCommandProcess(std::string payload)
-{
-    streamLogCommandProcess(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL, payload);
-}
-void MasterControlAPI::segmentedStreamLogCommandProcess(std::string payload)
-{
-    streamLogCommandProcess(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED, payload);
-}
-void MasterControlAPI::occupancyGridStreamLogCommandProcess(std::string payload)
-{
-    streamLogCommandProcess(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID, payload);
-}
-
-void MasterControlAPI::manualCommandProcess(std::string payload)
-{
     switch (payload[0])
     {
     case CMD_STOP:
@@ -126,8 +58,8 @@ void MasterControlAPI::statusPublish()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         VehicleData *data = VehicleController::getInstance()->getVehicleData();
-        const char *payload = data->toJson();
-        publishTo(PUBSUB_API_SENSOR_STATUS_URI, std::string(payload));
+        std::string payload = data->toJson();
+        publishTo(PUBSUB_API_SENSOR_STATUS_URI, payload);
     }
 }
 

@@ -58,6 +58,9 @@ SET(TARGET_H
     utils/image_utils.h
     model/planning_waypoint.h
     model/global_definitions.h
+    planning/short_term_planner.h
+    log/sensor_logger.h
+    log/video_logger.h
 )
 
 add_executable(
@@ -68,6 +71,10 @@ add_executable(
     control/master_control_api.cpp
     control/vehicle_controller.cpp
     control/hardware_keepalive.cpp
+    planning/short_term_planner.cpp
+    log/sensor_logger.cpp
+    log/video_logger.cpp
+
 )
 
 target_link_libraries(planner-bin PkgConfig::deps 

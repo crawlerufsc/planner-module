@@ -1,41 +1,46 @@
 #include "vehicle_controller.h"
 
-#include <functional>
-
-using namespace std::placeholders;
+#include <iostream>
 
 VehicleController *VehicleController::_instance = nullptr;
 
 VehicleController::VehicleController()
 {
     status = new VehicleData();
+    mtx = new std::mutex();
 
     isManualControl = false;
 
-    std::function<void(ResponseData *)> imuCallback = std::bind(&VehicleController::sensorIMUData, this, std::placeholders::_1);
-    CrawlerHAL::getInstance()->addCallbackHandler(SENSOR_IMU, imuCallback);
+    fIMU = [this](IMUData *p) { //
+        mtx->lock();
+        if (this->status->imu != nullptr)
+            delete this->status->imu;
+        this->status->imu = p;
+        mtx->unlock();
+    };
 
-    std::function<void(ResponseData *)> gpsCallback = std::bind(&VehicleController::sensorGPSData, this, std::placeholders::_1);
-    CrawlerHAL::getInstance()->addCallbackHandler(SENSOR_GPS, gpsCallback);
-}
+    fGPS = [this](GPSData *p) { //
+        mtx->lock();
+        if (this->status->gps != nullptr)
+            delete this->status->gps;
+        this->status->gps = p;
+        mtx->unlock();
+    };
 
-void VehicleController::sensorIMUData(ResponseData *p)
-{
-    CrawlerHAL::parseData_IMU(p, status->imu);
-}
-
-void VehicleController::sensorGPSData(ResponseData *p)
-{
-    CrawlerHAL::parseData_GPS(p, status->gps);
+    CrawlerHAL::getInstance()->addIMUCallbackHandler(fIMU);
+    CrawlerHAL::getInstance()->addGPSCallbackHandler(fGPS);
 }
 
 VehicleController::~VehicleController()
 {
+    CrawlerHAL::getInstance()->removeIMUCallbackHandler();
+    CrawlerHAL::getInstance()->removeGPSCallbackHandler();
     delete status;
 }
 
 bool VehicleController::forwardIncrease(int increaseValue)
 {
+    mtx->lock();
     status->forwardPower += increaseValue;
     if (status->forwardPower > 250)
     {
@@ -45,6 +50,7 @@ bool VehicleController::forwardIncrease(int increaseValue)
     {
         status->forwardPower = -250;
     }
+    mtx->unlock();
 
     if (status->forwardPower >= 0)
     {
@@ -65,13 +71,17 @@ bool VehicleController::forwardIncrease(int increaseValue)
 
 bool VehicleController::increaseTurnLeftAngle(uint8_t increaseValue)
 {
+    mtx->lock();
     status->sterringAngle -= increaseValue;
+    mtx->unlock();
     return CrawlerHAL::getInstance()->setSteeringAngle(status->sterringAngle);
 }
 
 bool VehicleController::increaseTurnRightAngle(uint8_t increaseValue)
 {
+    mtx->lock();
     status->sterringAngle += increaseValue;
+    mtx->unlock();
     return CrawlerHAL::getInstance()->setSteeringAngle(status->sterringAngle);
 }
 
@@ -86,26 +96,27 @@ VehicleData *VehicleController::getVehicleData()
     {
         return new VehicleData();
     }
-    return status->clone();
+    mtx->lock();
+    VehicleData *p = status->clone();
+    mtx->unlock();
+    return p;
 }
 
 bool VehicleController::stop()
 {
-    if (status != nullptr)
-    {
-        status->forwardPower = 0;
-        status->sterringAngle = 0;
-    }
+    mtx->lock();
+    status->forwardPower = 0;
+    status->sterringAngle = 0;
+    mtx->unlock();
     return CrawlerHAL::getInstance()->setEngineStop();
 }
 
 bool VehicleController::reset()
 {
-    if (status != nullptr)
-    {
-        status->forwardPower = 0;
-        status->sterringAngle = 0;
-    }
+    mtx->lock();
+    status->forwardPower = 0;
+    status->sterringAngle = 0;
+    mtx->unlock();
     return CrawlerHAL::getInstance()->reset();
 }
 

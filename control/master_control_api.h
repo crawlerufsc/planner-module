@@ -38,12 +38,6 @@ private:
 
     void statusPublish();
 
-    void manualCommandProcess(std::string payload);
-    void streamLogCommandProcess(std::string streamResourceName, std::string payload);
-    void originalStreamLogCommandProcess(std::string payload);
-    void segmentedStreamLogCommandProcess(std::string payload);
-    void occupancyGridStreamLogCommandProcess(std::string payload);
-
 protected:
     void onReceived(std::string topic, std::string payload) override;
     void onStop() override;

@@ -2,6 +2,7 @@
 #define _VEHICLE_DATA_H
 
 #include <crawler_hal.h>
+#include <string.h>
 
 class VehicleData
 {
@@ -31,13 +32,6 @@ public:
             delete gps;
     }
 
-    void copy(VehicleData *p) {
-        p->sterringAngle = sterringAngle;
-        p->forwardPower = forwardPower;
-        imu->copy(p->imu);
-        gps->copy(p->gps);
-    }
-
     VehicleData *clone()
     {
         VehicleData *p = new VehicleData();
@@ -50,25 +44,27 @@ public:
         return p;
     }
 
-    const char *toJson()
+    std::string toJson()
     {
-        std::stringstream ss;
-        ss << "{\n";
-        ss << "'forwardPower' : " << forwardPower << ",\n";
-        ss << "'sterringAngle' : " << sterringAngle << ",\n";
+        std::stringstream *ss = new std::stringstream();
+        ;
+        *ss << "{\n";
+        *ss << "'forwardPower' : " << forwardPower << ",\n";
+        *ss << "'sterringAngle' : " << sterringAngle << ",\n";
 
         if (imu != nullptr)
-            ss << "'imu' : " << imu->toJson() << ",\n";
+            *ss << "'imu' : " << imu->toJson() << ",\n";
         else
-            ss << "'imu' : {},\n";
+            *ss << "'imu' : {},\n";
 
         if (gps != nullptr)
-            ss << "'gps' : " << gps->toJson() << ",\n";
+            *ss << "'gps' : " << gps->toJson() << ",\n";
         else
-            ss << "'gps' : {}\n";
+            *ss << "'gps' : {}\n";
 
-        ss << "}\n";
-        return ss.str().c_str();
+        *ss << "}\n";
+
+        return ss->str();
     }
 };
 

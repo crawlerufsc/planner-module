@@ -4,6 +4,7 @@
 #include <crawler_hal.h>
 #include <stdint.h>
 #include <sstream>
+#include <mutex>
 
 #include "../model/vehicle_data.h"
 
@@ -12,12 +13,10 @@ class VehicleController
 private:
     VehicleData *status;
     bool isManualControl;
-
-    void sensorIMUData(ResponseData *p);
-    void sensorGPSData(ResponseData *p);
-
-    VehicleController(const CrawlerHAL &) = delete;
+    std::mutex *mtx;
     VehicleController();
+    std::function<void(IMUData *)> fIMU;
+    std::function<void(GPSData *)> fGPS;
 
 public:
     ~VehicleController();

@@ -3,6 +3,8 @@
 #include "control/master_control_api.h"
 #include "communication/webrtc_api_stream.h"
 #include "control/vehicle_controller.h"
+#include "log/sensor_logger.h"
+#include "log/video_logger.h"
 
 #include <resource_manager.h>
 #include <network_stream_reader.h>
@@ -30,22 +32,30 @@ void HardwareKeepAlive::initResources()
         return MasterControlAPI::getInstance();
     });
 
-    ResourceManager::addResourceFactory<NetworkStreamLogger>(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL, [=] { //
-        return (new NetworkStreamLogger("/home/cristiano/original_vision_output.mkv", BROKER_IP, BROKER_PORT, PLANNER_IP, LOCALPORT_STREAM_LOGGER_ORIGINAL))
-            ->withStreamRequestUri(PUBSUB_STREAM_REQUEST_URI_ORIGINAL);
+    ResourceManager::addResourceFactory<SensorLogger>([=] { //
+        return new SensorLogger(FILE_LOG_SENSORS);
     });
 
-    ResourceManager::addResourceFactory<NetworkStreamLogger>(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED, [=] { //
-        return (new NetworkStreamLogger("/home/cristiano/segmented_vision_output.mkv", BROKER_IP, BROKER_PORT, PLANNER_IP, LOCALPORT_STREAM_LOGGER_SEGMENTED))
-            ->withStreamRequestUri(PUBSUB_STREAM_REQUEST_URI_SEGMENTED);
-    });
-
-    ResourceManager::addResourceFactory<NetworkStreamLogger>(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID, [=] { //
-        return (new NetworkStreamLogger("/home/cristiano/segmented_vision_output.mkv", BROKER_IP, BROKER_PORT, PLANNER_IP, LOCALPORT_STREAM_LOGGER_OCCUPANCYGRID))
-            ->withStreamRequestUri(PUBSUB_STREAM_REQUEST_URI_OCCUPANCYGRID);
-    });
-
+    ResourceManager::getSingletonResource<SensorLogger>();
     // const char *file = getLogFileName();
+
+
+    ResourceManager::addResourceFactory<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL, [=] { //
+        return new VideoLogger(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL, PUBSUB_API_ORIGINAL_STREAM_LOGGING_REQUEST_URI);
+    });
+
+    ResourceManager::addResourceFactory<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED, [=] { //
+        return new VideoLogger(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED, PUBSUB_API_SEGMENTED_STREAM_LOGGING_REQUEST_URI);
+    });
+
+    ResourceManager::addResourceFactory<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID, [=] { //
+        return new VideoLogger(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID, PUBSUB_API_OCCUPANCYGRID_STREAM_LOGGING_REQUEST_URI);
+    });
+
+    ResourceManager::getSingletonResource<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL);
+    ResourceManager::getSingletonResource<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED);
+    ResourceManager::getSingletonResource<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID);
+
 }
 
 bool HardwareKeepAlive::tryInitializeHardware()
