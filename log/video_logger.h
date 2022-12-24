@@ -1,7 +1,6 @@
 #ifndef _VIDEO_LOGGER_H
 #define _VIDEO_LOGGER_H
 
-#include <functional>
 #include <pubsub_client.h>
 #include <string>
 #include <network_stream_logger.h>
@@ -9,19 +8,29 @@
 class VideoLogger : PubSubClient
 {
 private:
-    NetworkStreamLogger * logger;
-    std::string resourceName;
-    void start();
-    void stop();
+    NetworkStreamLogger *original;
+    NetworkStreamLogger *segmented;
+    NetworkStreamLogger *og;
+    bool isInitialized;
+
+    void startLogOriginal();
+    void startLogSegmented();
+    void startLogOccupancyGrid();
+    void stopLogOriginal();
+    void stopLogSegmented();
+    void stopLogOccupancyGrid();
+    void requestStreamOriginal(bool);
+    void requestStreamSegmented(bool);
+    void requestStreamOccupancyGrid(bool);
 
 protected:
     void onReceived(std::string topic, std::string payload) override;
     void onStop() override;
 
 public:
-    VideoLogger(std::string resourceName, const char *topic);
+    VideoLogger();
     ~VideoLogger();
-
+    bool initialize();
 };
 
 #endif

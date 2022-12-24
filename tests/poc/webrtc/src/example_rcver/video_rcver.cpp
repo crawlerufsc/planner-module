@@ -59,7 +59,7 @@ int main() {
 		sockaddr_in addr = {};
 		addr.sin_family = AF_INET;
 		addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-		addr.sin_port = htons(5000);
+		addr.sin_port = htons(17720);
 
 		rtc::Description::Video media("video", rtc::Description::Direction::RecvOnly);
 		media.addH264Codec(96);

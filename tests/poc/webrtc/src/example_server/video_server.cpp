@@ -43,8 +43,8 @@ int main() {
 		SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
 		struct sockaddr_in addr = {};
 		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-		addr.sin_port = htons(6000);
+		addr.sin_addr.s_addr = inet_addr("10.42.0.139");
+		addr.sin_port = htons(17720);
 
 		if (bind(sock, reinterpret_cast<const sockaddr *>(&addr), sizeof(addr)) < 0)
 			throw std::runtime_error("Failed to bind UDP socket on 127.0.0.1:6000");
@@ -74,8 +74,10 @@ int main() {
 		char buffer[BUFFER_SIZE];
 		int len;
 		while ((len = recv(sock, buffer, BUFFER_SIZE, 0)) >= 0) {
-			if (len < sizeof(rtc::RtpHeader) || !track->isOpen())
+			if (len < sizeof(rtc::RtpHeader) || !track->isOpen()) {
+				printf ("ignoring\n");
 				continue;
+			}
 
 			auto rtp = reinterpret_cast<rtc::RtpHeader *>(buffer);
 			rtp->setSsrc(ssrc);

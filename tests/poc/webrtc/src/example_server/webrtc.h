@@ -13,7 +13,7 @@
 #include <sstream>
 #include <mutex>
 
-#include "../../../../../model/frame.h"
+#include <frame.h>
 
 //#define DEBUG 1
 

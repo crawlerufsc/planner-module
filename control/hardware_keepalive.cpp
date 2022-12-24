@@ -39,23 +39,15 @@ void HardwareKeepAlive::initResources()
     ResourceManager::getSingletonResource<SensorLogger>();
     // const char *file = getLogFileName();
 
-
-    ResourceManager::addResourceFactory<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL, [=] { //
-        return new VideoLogger(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL, PUBSUB_API_ORIGINAL_STREAM_LOGGING_REQUEST_URI);
+    ResourceManager::addResourceFactory<VideoLogger>([=] { //
+        return new VideoLogger();
     });
 
-    ResourceManager::addResourceFactory<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED, [=] { //
-        return new VideoLogger(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED, PUBSUB_API_SEGMENTED_STREAM_LOGGING_REQUEST_URI);
+    ResourceManager::addResourceFactory<WebRTCApiStream>([=] { //
+        return new WebRTCApiStream(PLANNER_IP);
     });
 
-    ResourceManager::addResourceFactory<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID, [=] { //
-        return new VideoLogger(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID, PUBSUB_API_OCCUPANCYGRID_STREAM_LOGGING_REQUEST_URI);
-    });
-
-    ResourceManager::getSingletonResource<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_ORIGINAL);
-    ResourceManager::getSingletonResource<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_SEGMENTED);
-    ResourceManager::getSingletonResource<VideoLogger>(RESOURCE_NAME_STREAM_LOGGER_OCCUPANCYGRID);
-
+    ResourceManager::getSingletonResource<WebRTCApiStream>();
 }
 
 bool HardwareKeepAlive::tryInitializeHardware()
@@ -89,7 +81,9 @@ void HardwareKeepAlive::printInitializeStatus()
     printf("----------------\n");
     printf("[Vision Module]:\t%s\n", (ResourceManager::getSingletonResource<NetworkStreamReader>(RESOURCE_NAME_STREAM_READER_OCCUPANCYGRID))->isConnected() ? "ok" : "?");
     printf("[Crawler HAL]: \t%s\n", VehicleController::isAlive() ? "ok" : "?");
-    printf("[Master control API]:\t%s\n\n", MasterControlAPI::isAlive() ? "ok" : "?");
+    printf("[Master control API]:\t%s\n", MasterControlAPI::isAlive() ? "ok" : "?");
+    printf("[Stream logging service]:\t%s\n", (ResourceManager::getSingletonResource<VideoLogger>())->initialize() ? "ok" : "?");
+    printf("[WebRTC API]:\t%s\n\n", (ResourceManager::getSingletonResource<WebRTCApiStream>())->isListening() ? "ok" : "?");
 }
 
 void HardwareKeepAlive::loop_forever()
@@ -101,7 +95,8 @@ void HardwareKeepAlive::loop_forever()
     {
         if (tryInitializeHardware())
         {
-            if (!lastCheckModulesUp) {
+            if (!lastCheckModulesUp)
+            {
                 printInitializeStatus();
                 printf("All modules are up and running now\n");
             }

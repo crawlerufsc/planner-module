@@ -28,10 +28,6 @@ class MasterControlAPI : protected PubSubClient
 {
 private:
     std::thread *statusPublishThr;
-    WebRTCService<u_char> *original;
-    WebRTCService<u_char> *segmented;
-    WebRTCService<u_char> *occupancyGrid;
-
     const char *pubSubHost;
     int pubSubPort;
     const char *localIP;

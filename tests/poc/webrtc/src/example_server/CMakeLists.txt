@@ -11,11 +11,10 @@ set(MEDIA_UWP_RESOURCES
 )
 
 SET(TARGET_H
-	../../../../../model/frame.h
 	webrtc.h
 )
 
-add_executable(video_server video_server2.cpp)
+add_executable(video_server video_server.cpp)
 
 
 set_target_properties(video_server PROPERTIES
@@ -37,9 +36,22 @@ pkg_check_modules(GST_VIDEO REQUIRED gstreamer-video-1.0)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(/usr/include/gstreamer-1.0)
+include_directories(/usr/include/crawler)
 
+# framework lib
+find_library(FRAMEWORK_LIB REQUIRED
+    NAMES crawler_fw
+    HINTS /usr/lib
+)
 
-target_link_libraries(video_server LibDataChannel::LibDataChannel Threads::Threads nlohmann_json  ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(video_server 
+	LibDataChannel::LibDataChannel 
+	Threads::Threads nlohmann_json  
+	${GST_APP_LIBRARIES} 
+	${GST_VIDEO_LIBRARIES} 
+	${OpenCV_LIBS}
+	${FRAMEWORK_LIB}
+)
 
 if(MSVC)
 	add_custom_command(TARGET video_server POST_BUILD

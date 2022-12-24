@@ -49,12 +49,11 @@ find_library(FRAMEWORK_LIB REQUIRED
 )
 
 SET(TARGET_H
-    control/execution_controller.h
     control/vehicle_controller.h
     control/master_control_api.h
     control/hardware_keepalive.h
-    #communication/webrtc.h
-    #communication/webrtc_api_stream.h
+    communication/webrtc.h
+    communication/webrtc_api_stream.h
     utils/image_utils.h
     model/planning_waypoint.h
     model/global_definitions.h
@@ -66,8 +65,7 @@ SET(TARGET_H
 add_executable(
     planner-bin 
     planner.cpp 
-    #communication/webrtc_api_stream.cpp
-    control/execution_controller.cpp
+    communication/webrtc_api_stream.cpp
     control/master_control_api.cpp
     control/vehicle_controller.cpp
     control/hardware_keepalive.cpp

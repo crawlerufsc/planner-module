@@ -6,6 +6,7 @@
 #include <sstream>
 #include <resource_manager.h>
 #include "../model/global_definitions.h"
+#include "../communication/webrtc_api_stream.h"
 
 MasterControlAPI *MasterControlAPI::_instance = nullptr;
 
@@ -70,8 +71,7 @@ MasterControlAPI::MasterControlAPI(const char *pubSubHost, int pubSubPort, const
     this->pubSubPort = pubSubPort;
     this->localIP = localIP;
 
-    original = new WebRTCService<u_char>();
-    std::string sdp = original->getSdpService();
+    std::string sdp = ResourceManager::getSingletonResource<WebRTCApiStream>()->getServiceSpd();
 
     std::ofstream outp;
     outp.open("/tmp/crawler_sdp_original.dat", std::ios_base::out | std::ios_base::trunc);
